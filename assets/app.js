@@ -597,6 +597,173 @@
     $('hb-abl').innerHTML = abl.map((r) => (r[0] === 'grp' ? `<div class="grp">${r[1]}</div>` : `<div class="row ${r[2]}"><span class="lab">${r[0]}</span><div class="tr"><div class="fl" style="width:${(r[1] / 2.9) * 100}%"></div><span class="val" style="left:${(r[1] / 2.9) * 100}%">+${r[1].toFixed(2)} dB</span></div></div>`)).join('');
   }
 
+  // ================================================================== the boost test, animated
+  // Plan view in the query camera's frame (the encoding is query-relative), as a schematic. Input times t0..t3 at
+  // 0, 1/3, 2/3, 1 of the window and the query at 1/2. A boost adds w*t to every camera position: the photos do not
+  // change, but the same static tower is lifted from a camera that sits w*(t_k - t_a) further along at each time.
+  // RayRoPE encodes those lifted points as they are; GALILEO's fitted velocity of the tower is w and transport by
+  // w*(t_a - t_k) puts every copy back. Numbers: measured static-region PSNR (GAL.boostStats, 80 Stereo4D clips).
+  function boostAnim() {
+    if (!$('bsx-r')) return;
+    const cvs = { r: $('bsx-r'), g: $('bsx-g') }, caps = [...document.querySelectorAll('#bsx .mth-step')];
+    const LW = 500, LH = 430, STAGE = [0, 5, 10, 15.5], TOTAL = 23, SP = 240;
+    const TT = [0, 1 / 3, 2 / 3, 1], TA = 0.5, X = [338, 196], CAM = [250, 398];
+    const SV = 0.45, S = [190, 318], SK = 0.4;                       // the ship: velocity (sails right, bow first), waterline, scale
+    const st = GAL.boostStats, scene = shipScene();
+    const clamp = (v) => Math.max(0, Math.min(1, v)), ease = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
+    const seg = (p, a, b) => ease(clamp((p - a) / (b - a)));
+    let t = REDUCED ? STAGE[3] - 0.01 : 0, playing = !REDUCED;
+    const SERIF = '"EB Garamond", Garamond, "Times New Roman", serif', MATH = '"STIX Two Text", "Times New Roman", serif';
+
+    function prep(cv) {
+      const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || LW, k = (w / LW) * dpr;
+      const W = Math.round(w * dpr), H = Math.round(w * (LH / LW) * dpr);
+      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+      const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H); ctx.setTransform(k, 0, 0, k, 0, 0);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; return ctx;
+    }
+    function text(ctx, s, x, y, { size = 15, color = C.fg, align = 'left', italic = false, math = false, alpha = 1, bold = false, halo = false } = {}) {
+      if (alpha <= 0) return;
+      ctx.save(); ctx.globalAlpha *= alpha; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+      ctx.font = `${italic ? 'italic ' : ''}${bold ? '600 ' : ''}${size}px ${math ? MATH : SERIF}`;
+      if (halo) { ctx.lineWidth = 4; ctx.strokeStyle = C.sheet; ctx.strokeText(s, x, y); }
+      ctx.fillText(s, x, y); ctx.restore();
+    }
+    function line(ctx, a, b, { color = C.fg, w = 1.4, dash = null, alpha = 1 } = {}) {
+      if (alpha <= 0) return;
+      ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = w; if (dash) ctx.setLineDash(dash);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.restore();
+    }
+    // parts: [[text, 'p' plain | 'm' math (italic) | 'sub' subscript], ...]
+    function mtext(ctx, parts, x, y, { size = 15, color = C.fg, align = 'left', alpha = 1 } = {}) {
+      if (alpha <= 0) return;
+      const items = parts.map(([str, k]) => ({ str, font: k === 'p' ? `${size}px ${SERIF}` : k === 'sub' ? `italic ${size * 0.68}px ${MATH}` : `italic ${size}px ${MATH}`, dy: k === 'sub' ? size * 0.28 : 0 }));
+      let w = 0; for (const it of items) { ctx.font = it.font; it.w = ctx.measureText(it.str).width; w += it.w; }
+      let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+      ctx.save(); ctx.globalAlpha *= alpha; ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      for (const it of items) { ctx.font = it.font; ctx.fillText(it.str, cx, y + it.dy); cx += it.w; }
+      ctx.restore();
+    }
+    function arrow(ctx, a, b, opt = {}) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]); if (len < 4 || (opt.alpha ?? 1) <= 0) return;
+      const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), h = opt.head || 7;
+      line(ctx, a, [b[0] - Math.cos(ang) * h * 0.6, b[1] - Math.sin(ang) * h * 0.6], opt);
+      ctx.save(); ctx.globalAlpha *= opt.alpha ?? 1; ctx.fillStyle = opt.color || C.fg; ctx.beginPath(); ctx.moveTo(b[0], b[1]);
+      ctx.lineTo(b[0] - Math.cos(ang - 0.42) * h, b[1] - Math.sin(ang - 0.42) * h); ctx.lineTo(b[0] - Math.cos(ang + 0.42) * h, b[1] - Math.sin(ang + 0.42) * h);
+      ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    function camera(ctx, p, color, s = 1, alpha = 1) {
+      if (alpha <= 0) return;
+      ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(p[0] - 10 * s, p[1] - 21 * s); ctx.lineTo(p[0] + 10 * s, p[1] - 21 * s); ctx.closePath();
+      ctx.fillStyle = C.sheet; ctx.fill(); ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p[0], p[1], 4 * s, 0, 7); ctx.fillStyle = color; ctx.fill(); ctx.restore();
+    }
+    function tower(ctx, x, color, { alpha = 1, fill = true } = {}) {   // the bell tower, standing at plan position x
+      if (alpha <= 0) return;
+      const y = X[1] + 30, w = 16, h = 50;
+      ctx.save(); ctx.globalAlpha *= alpha; ctx.lineWidth = 1.3; ctx.strokeStyle = color;
+      ctx.beginPath(); ctx.rect(x - w / 2, y - h, w, h); if (fill) { ctx.fillStyle = color; ctx.globalAlpha *= 0.28; ctx.fill(); ctx.globalAlpha /= 0.28; } ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - w / 2 - 2, y - h); ctx.lineTo(x + w / 2 + 2, y - h); ctx.lineTo(x, y - h - 16); ctx.closePath(); if (fill) { ctx.globalAlpha *= 0.28; ctx.fill(); ctx.globalAlpha /= 0.28; } ctx.stroke();
+      ctx.restore();
+    }
+    const dot = (ctx, p, color, r = 5, alpha = 1) => { if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 7); ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = C.sheet; ctx.stroke(); ctx.restore(); };
+    const nearest = (px) => st.px.reduce((b, v, i) => (Math.abs(v - px) < Math.abs(st.px[b] - px) ? i : b), 0);
+
+    // f: boost strength, 0..1 of 32 px drift over the input window; pr / pg: progress of RayRoPE's / GALILEO's beats
+    function draw(ctx, which, f, pr, pg) {
+      const tc = [C.t[0], C.t[1], C.t[2], C.t[3]];
+      const off = (k) => f * SP * (TT[k] - TA), key = (k) => [X[0] + off(k), X[1]];                 // the tower at t_k
+      const soff = (k) => (SV + f) * SP * (TT[k] - TA), skey = (w0) => [w0[0] + 4 * SK, w0[1] - 48 * SK];  // the ship
+      const sw = (k) => [S[0] + soff(k), S[1]];
+      const m = which === 'g' ? seg(pg, 0.42, 0.8) : 0, va = which === 'g' ? seg(pg, 0.1, 0.38) * (1 - m) : 0;
+      // the same photo at every input time
+      for (let k = 0; k < 4; k++) {
+        const x = 250 + (k - 1.5) * 62, s = 50;
+        ctx.drawImage(scene.still, 0, 40, 256, 216, x - s / 2, 8, s, s * 216 / 256);
+        ctx.strokeStyle = tc[k]; ctx.lineWidth = 1.6; ctx.strokeRect(x - s / 2, 8, s, s * 216 / 256);
+        text(ctx, 't' + SUB[k], x, 72, { size: 13, color: tc[k], align: 'center', math: true });
+      }
+      text(ctx, 'the same four photos for every w', 250, 92, { size: 13.5, color: C.faint, align: 'center', italic: true });
+      // the new frame: moving at -w relative to the shore
+      const sa = clamp(f * 4);
+      if (sa > 0) {
+        ctx.save(); ctx.globalAlpha = sa; scene.drawShip(ctx, 58, 138, 0.36); ctx.restore();
+        arrow(ctx, [84, 148], [84 - 14 - 34 * f, 148], { color: C.gilt, w: 1.6, head: 7, alpha: sa });
+        text(ctx, 'new frame, moving at −w', 14, 170, { size: 13, color: C.dim, italic: true, alpha: sa });
+      }
+      // the camera at the four input times, each with its rays to the tower and to the ship it sees
+      const keep = 1 - m * 0.75;
+      for (let k = 0; k < 4; k++) {
+        const c = [CAM[0] + off(k), CAM[1] + 8], ct = [c[0], c[1] - 16];
+        line(ctx, ct, key(k), { color: tc[k], w: 1.1, dash: [3, 3], alpha: 0.8 * keep });
+        line(ctx, ct, skey(sw(k)), { color: tc[k], w: 1.1, dash: [3, 3], alpha: 0.8 * keep });
+        camera(ctx, c, tc[k], 0.75, 0.95);
+      }
+      camera(ctx, CAM, C.fg, 1);
+      mtext(ctx, [['query camera at ', 'p'], ['t', 'm'], ['a', 'sub']], CAM[0] + 16, CAM[1] + 22, { size: 13.5 });
+      mtext(ctx, [['key camera at ', 'p'], ['t', 'm'], ['0', 'sub'], [' … ', 'p'], ['t', 'm'], ['3', 'sub']], CAM[0] - 16, CAM[1] + 22, { size: 13.5, align: 'right', color: C.dim });
+      const top = [CAM[0], CAM[1] - 21];
+      // where the tower and the ship are for the query camera
+      tower(ctx, X[0], C.fg, { fill: false });
+      ctx.save(); ctx.strokeStyle = C.fg; ctx.lineWidth = 1.3; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(skey(S)[0], skey(S)[1], 9, 0, 7); ctx.stroke(); ctx.restore();
+      // the keys: where they were lifted (RayRoPE) or moved by their fitted velocity (GALILEO)
+      for (let k = 0; k < 4; k++) {
+        const p0 = key(k), p = [p0[0] + (X[0] - p0[0]) * m, X[1]];
+        const s0 = sw(k), s1 = [s0[0] + (S[0] - s0[0]) * m, S[1]];
+        if (m > 0) {
+          if (Math.abs(off(k)) > 8) { tower(ctx, p0[0], tc[k], { alpha: 0.16 }); arrow(ctx, [p0[0], X[1] + 60], [p[0], X[1] + 60], { color: C.now, w: 1.6, head: 6, alpha: 0.9 }); }
+          if (Math.abs(soff(k)) > 8) { ctx.save(); ctx.globalAlpha = 0.15; scene.drawShip(ctx, s0[0], s0[1], SK); ctx.restore(); arrow(ctx, [s0[0], S[1] + 46], [s1[0], S[1] + 46], { color: C.now, w: 1.6, head: 6, alpha: 0.9 }); }
+        }
+        tower(ctx, p[0], tc[k], { alpha: 0.75 }); dot(ctx, p, tc[k], 5);
+        ctx.save(); ctx.globalAlpha = 0.6; scene.drawShip(ctx, s1[0], s1[1], SK); ctx.restore(); dot(ctx, skey(s1), tc[k], 4.5);
+        if (va > 0 && f > 0.02) arrow(ctx, [p0[0], X[1] - 44 - k * 6], [p0[0] + Math.max(14, 0.32 * f * SP), X[1] - 44 - k * 6], { color: C.fg, w: 1.3, head: 6, alpha: va });
+        if (va > 0) arrow(ctx, [skey(s0)[0], skey(s0)[1] - 22 - k * 5], [skey(s0)[0] + Math.max(14, 0.32 * (SV + f) * SP), skey(s0)[1] - 22 - k * 5], { color: C.fg, w: 1.3, head: 6, alpha: va });
+      }
+      if (which === 'r') {
+        const fa = seg(pr, 0.1, 0.4), ea = seg(pr, 0.4, 0.7);
+        for (let k = 0; k < 4; k++) { line(ctx, top, key(k), { color: C.base, w: 1.3, alpha: 0.8 * fa }); line(ctx, top, skey(sw(k)), { color: C.base, w: 1.3, alpha: 0.8 * fa }); }
+        for (let k = 0; k < 4; k++) {
+          if (Math.abs(off(k)) > 10) arrow(ctx, [X[0] + Math.sign(off(k)) * 9, X[1] - 52], [key(k)[0], X[1] - 52], { color: C.bad, w: 1.6, head: 6, alpha: ea });
+          if (Math.abs(soff(k)) > 10) arrow(ctx, [S[0] + Math.sign(soff(k)) * 9, S[1] + 46], [sw(k)[0], S[1] + 46], { color: C.bad, w: 1.6, head: 6, alpha: ea });
+        }
+        if (f > 0.15) mtext(ctx, [['−w (t', 'm'], ['a', 'sub'], [' − t', 'm'], ['b', 'sub'], [')', 'm']], key(0)[0] - 4, X[1] - 62, { size: 14, color: C.bad, alpha: ea });
+      } else {
+        if (va > 0 && f > 0.02) mtext(ctx, [['fitted velocity ', 'p'], ['w', 'm']], key(3)[0] - 4, X[1] - 76, { size: 14, align: 'center', alpha: va });
+        if (va > 0) mtext(ctx, [['fitted ', 'p'], ['v + w', 'm']], Math.min(skey(sw(3))[0] + Math.max(14, 0.32 * (SV + f) * SP) + 8, 420), skey(sw(3))[1] - 40, { size: 14, alpha: va });
+        if (m > 0.05 && f > 0.15) mtext(ctx, [['+ w (t', 'm'], ['a', 'sub'], [' − t', 'm'], ['b', 'sub'], [')', 'm']], X[0], X[1] + 82, { size: 14, color: C.now, align: 'center', alpha: m });
+        if (m > 0.05) mtext(ctx, [['+ (v + w)(t', 'm'], ['a', 'sub'], [' − t', 'm'], ['b', 'sub'], [')', 'm']], S[0], S[1] - 50, { size: 14, color: C.now, align: 'center', alpha: m });
+        const qa = seg(pg, 0.8, 0.95);
+        line(ctx, top, X, { color: C.now, w: 2.2, alpha: qa }); line(ctx, top, skey(S), { color: C.now, w: 2.2, alpha: qa });
+      }
+      text(ctx, 'the tower', X[0], X[1] + 47, { size: 13.5, align: 'center', halo: true });
+      ctx.save(); ctx.font = `13.5px ${SERIF}`; const lw = ctx.measureText('the ship, sailing at v').width; ctx.restore();
+      ctx.save(); ctx.fillStyle = C.sheet; ctx.globalAlpha = 0.85; ctx.fillRect(S[0] - lw / 2 - 4, S[1] + 15, lw + 8, 18); ctx.restore();
+      mtext(ctx, [['the ship, sailing at ', 'p'], ['v', 'm']], S[0], S[1] + 28, { size: 13.5, align: 'center' });
+    }
+
+    function render() {
+      let f, pr = 0, pg = 0, active;
+      if (t < STAGE[1]) { f = seg(t, 1, 4) * 0.5; active = 0; }
+      else if (t < STAGE[2]) { f = 0.5; pr = (t - STAGE[1]) / (STAGE[2] - STAGE[1]); active = 1; }
+      else if (t < STAGE[3]) { f = 0.5; pr = 1; pg = (t - STAGE[2]) / (STAGE[3] - STAGE[2]); active = 2; }
+      else { const u = (t - STAGE[3]) / (TOTAL - STAGE[3]); f = 0.5 + 0.5 * Math.sin(u * 2 * Math.PI); pr = pg = 1; active = 3; }   // 16 px -> 32 -> 0 -> 16
+      draw(prep(cvs.r), 'r', f, pr, pg); draw(prep(cvs.g), 'g', f, pr, pg);
+      caps.forEach((c, k) => c.classList.toggle('on', k === active || (active === 3 && k > 0)));
+      const px = f * 32, i = nearest(px);
+      $('bsx-drift').textContent = `w: drift over the input window ${px.toFixed(0)} px`;
+      const say = (a, b) => `${st.px[i]} px · static ${a[i].toFixed(1)} dB (${(a[i] - a[0]).toFixed(1)}) · moving ${b[i].toFixed(1)} dB (${(b[i] - b[0]).toFixed(1)})`;
+      $('bsx-pr').textContent = pr > 0.4 || active === 3 ? say(st.rayrope_static, st.rayrope_moving) : '';
+      $('bsx-pg').textContent = pg > 0.8 || active === 3 ? say(st.galileo_static, st.galileo_moving) : '';
+    }
+    const tl = timeline($('bsx-track'), { min: 0, max: TOTAL, ticks: [{ v: STAGE[0], color: C.fg, label: 'a' }, { v: STAGE[1], color: C.fg, label: 'b' }, { v: STAGE[2], color: C.fg, label: 'c' }, { v: STAGE[3], color: C.now, label: 'sweep w' }], onInput: (v) => { t = Math.min(v, TOTAL - 1e-3); render(); } });
+    const setPlay = (on) => { playing = on; $('bsx-play').textContent = on ? '❚❚' : '▶'; $('bsx-play').setAttribute('aria-label', on ? 'Pause' : 'Play'); };
+    $('bsx-play').onclick = () => setPlay(!playing);
+    caps.forEach((c, k) => { c.onclick = () => { t = STAGE[k]; tl.set(t); setPlay(true); render(); }; });
+    setPlay(playing); tl.set(t); render();
+    whileVisible($('bsx'), (dt) => { if (playing) { t = (t + dt) % TOTAL; tl.set(t); } render(); });
+    addEventListener('resize', render);
+  }
+
   // ================================================================== Galileo's ship, drawn for the method figure
   // An illustration, not model output: the ship of the Dialogue (1632) sails past Venice at constant
   // velocity. Three 256-px frames at t_b - dt, t_b, t_b + dt and the ship cut out of a common box, in the shape the
@@ -664,7 +831,7 @@
         g.strokeStyle = v > 0.7 ? 'rgba(240,244,236,.8)' : 'rgba(55,80,70,.55)'; g.lineWidth = 0.6 + (y - 118) / 140;
         g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + l / 2, y - l * 0.22, x + l, y); g.stroke();
       }
-      ship(g, cx);
+      if (cx != null) ship(g, cx);
       return c;
     }
     const box = [Math.floor(CX[0] - 54), WL - 86, Math.ceil(CX[2] + 50), WL + 9];
@@ -680,6 +847,8 @@
       tb: 0.1, ta: 0.1667, xt: [[0, -1], [0.1, 0], [0.2, 1]], spd: 10, pb, m_lo, m_hi, c_lo: tokc(m_lo), c_hi: tokc(m_hi), box,
       win: [pb[0] - 56, pb[1] - 44, 112],
       frames: { lo: frame(CX[0]), b: frame(CX[1]), hi: frame(CX[2]) }, cuts: { lo: cut(CX[0]), b: cut(CX[1]), hi: cut(CX[2]) },
+      still: frame(null),                                         // the shore without the ship (the boost test's photo)
+      drawShip: (g, x, y, k) => { g.save(); g.translate(x, y); g.scale(k, k); g.translate(-CXB, -WL); ship(g, CXB); g.restore(); },
     };
   }
 
@@ -1036,7 +1205,7 @@
       setTimeout(() => (b.textContent = 'Copy'), 1600);
     };
     const api = {};
-    for (const fn of [tables, jovilog, keysDemo, player, spacetime, methodAnim, attention, boost]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
+    for (const fn of [tables, jovilog, keysDemo, player, spacetime, methodAnim, attention, boostAnim, boost]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
     try { demo(api); } catch (e) { console.error('demo', e); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
