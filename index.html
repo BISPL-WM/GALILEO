@@ -443,7 +443,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
     </figure>
   </div>
 
-  <p class="teaser-say">Geometry-aware positional encodings tell attention where moving content <b>was</b>. GALILEO moves every key along its 3D velocity before encoding, so attention sees where the content <em>is at the query time</em>.</p>
 
   <div class="inst" id="demo">
     <div class="inst-bar"><div class="demo-clips" id="demo-clips" role="group" aria-label="Sample"></div></div>
@@ -468,7 +467,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <canvas id="psnr" style="cursor:pointer;touch-action:none" width="1100" height="150" aria-label="PSNR on the moving region per frame"></canvas>
       <div class="view-ctrl"><div class="chip-group"><span>Show</span><div class="chips" role="group" aria-label="Display"><button class="chip" data-mode="image" aria-pressed="true">Rendering</button><button class="chip" data-mode="error" aria-pressed="false">Error vs. ground truth ×4</button></div></div><div class="chip-group" style="margin-left:auto"><span>Zoom</span><div class="chips"><button class="chip" id="pl-zout" aria-label="Zoom out">−</button><button class="chip" id="pl-zin" aria-label="Zoom in">+</button><button class="chip" id="pl-zreset">Moving region</button></div></div></div>
       <div style="display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;margin-top:12px">
-        <label class="toggle"><input type="checkbox" id="pl-outline" checked> True outline of the moving region</label>
+        <label class="toggle"><input type="checkbox" id="pl-outline" checked> Outline of the moving object</label>
       </div>
       <div class="view-head"><h3>Same backbone, same inputs. Only the keys moved.</h3></div>
     </div>
