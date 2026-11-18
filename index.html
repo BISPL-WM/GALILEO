@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=IBM+Plex+Mono:wght@400&family=STIX+Two+Text:ital,wght@0,400;1,400;1,600&display=swap">
 <style>
-/* Layout concept: a printed book of observations after Sidereus Nuncius (1610). Laid paper and iron-gall ink by day, the
-   observing night in the dark theme; brass gilt for ornament, verdigris (the patina of brass) for GALILEO, lead grey for the
+/* Layout concept: a printed book of observations after Sidereus Nuncius (1610). Laid paper and iron-gall ink, one light
+   look only; brass gilt for ornament, verdigris (the patina of brass) for GALILEO, lead grey for the
    static baseline, and the four input times t0..t3 in the colours of the paper's figures. */
 :root {
   --ink: #ebe1c8; --sheet: #f3ebd8; --raise: #e4d8bb; --line: #b3a07a; --line-soft: #d6c8a6;
@@ -28,24 +28,7 @@
   --code: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --math: "STIX Two Text", "Times New Roman", Times, serif;
   --w: 1180px; --r: 3px;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --ink: #0e111b; --sheet: #141927; --raise: #1b2132; --line: #343c58; --line-soft: #222939;
-  --fg: #ece3cd; --dim: #b4a990; --faint: #898169;
-  --t0: #5b7cf7; --t1: #a36af5; --t2: #ec5b8d; --t3: #f6842e;
-  --now: #4fd1ae; --now-ink: #062820; --base: #a59e8d; --truth: #ffffff; --bad: #ff7f86;
-  --gilt: #d2b06a; --leather: #93593a; --brass: #cfa957; --field: #090b12; --plate: #e9dfc6;
-  --cameo: #ddd1b5; --engr: #2a2017; --star: rgba(236, 227, 205, .6); --chain: transparent;
-  color-scheme: dark;
-} }
-:root[data-theme="dark"] {
-  --ink: #0e111b; --sheet: #141927; --raise: #1b2132; --line: #343c58; --line-soft: #222939;
-  --fg: #ece3cd; --dim: #b4a990; --faint: #898169;
-  --t0: #5b7cf7; --t1: #a36af5; --t2: #ec5b8d; --t3: #f6842e;
-  --now: #4fd1ae; --now-ink: #062820; --base: #a59e8d; --truth: #ffffff; --bad: #ff7f86;
-  --gilt: #d2b06a; --leather: #93593a; --brass: #cfa957; --field: #090b12; --plate: #e9dfc6;
-  --cameo: #ddd1b5; --engr: #2a2017; --star: rgba(236, 227, 205, .6); --chain: transparent;
-  color-scheme: dark;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
