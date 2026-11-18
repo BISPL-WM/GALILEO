@@ -89,26 +89,26 @@ p { margin: 0; }
 .nav nav a:hover { color: var(--fg); }
 
 /* hero: a paper header in the middle; Galileo's portrait and telescope stand in the side margins */
-.hero { padding-block: 44px 8px; }
-.masthead { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr) minmax(0, 200px); gap: 40px; align-items: center; }
+.hero { padding-block: 22px 4px; }
+.masthead { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr) minmax(0, 170px); gap: 40px; align-items: center; }
 .mast { min-width: 0; display: grid; justify-items: center; text-align: center; }
 .motto { display: grid; gap: 4px; justify-items: center; }
-.motto q { quotes: "«" "»"; font: italic 400 23px/1.2 var(--display); color: var(--dim); }
+.motto q { quotes: "«" "»"; font: italic 400 21px/1.15 var(--display); color: var(--dim); }
 .motto q::before, .motto q::after { color: var(--gilt); }
 .motto small { font: 400 12.5px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-.hero h1 { display: grid; gap: 12px; justify-items: center; margin-top: 22px; }
-.h1-name { font: 400 clamp(56px, 7.4vw, 96px)/.92 var(--title); letter-spacing: .06em; margin-right: -.06em; color: var(--fg); }
-.h1-rest { font: 400 clamp(24px, 2.7vw, 35px)/1.2 var(--display); max-width: 26ch; color: var(--fg); }
-.timerule { display: flex; gap: 5px; width: min(100%, 300px); margin-top: 18px; }
+.hero h1 { display: grid; gap: 8px; justify-items: center; margin-top: 12px; }
+.h1-name { font: 400 clamp(52px, 6.4vw, 82px)/.92 var(--title); letter-spacing: .06em; margin-right: -.06em; color: var(--fg); }
+.h1-rest { font: 400 clamp(22px, 2.3vw, 30px)/1.2 var(--display); max-width: 34ch; color: var(--fg); }
+.timerule { display: flex; gap: 5px; width: min(100%, 300px); margin-top: 12px; }
 .timerule i { flex: 1; height: 3px; }
 .timerule i:nth-child(1) { background: var(--t0); } .timerule i:nth-child(2) { background: var(--t1); }
 .timerule i:nth-child(3) { background: var(--t2); } .timerule i:nth-child(4) { background: var(--t3); }
-.authors { margin-top: 18px; font-size: 21px; color: var(--fg); }
+.authors { margin-top: 12px; font-size: 20px; color: var(--fg); }
 .authors sup, .venue sup { font-size: .62em; margin-left: 1px; }
 .authors .an { white-space: nowrap; }
 .affil { margin-top: 4px; font-size: 18px; color: var(--dim); }
 .venue { margin-top: 2px; font-size: 15.5px; font-style: italic; color: var(--faint); }
-.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+.cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
 .side { margin: 0; display: grid; gap: 12px; justify-items: center; align-self: center; }
 .side figcaption { text-align: center; font-style: italic; font-size: 14.5px; color: var(--faint); line-height: 1.35; max-width: 22ch; }
 .oval { position: relative; width: 100%; aspect-ratio: 644 / 854; border-radius: 50%; background: var(--cameo); box-shadow: 0 0 0 6px var(--ink), 0 0 0 7px var(--gilt); }
@@ -127,7 +127,7 @@ p { margin: 0; }
 .scope .jup { fill: none; stroke: var(--fg); stroke-width: 1.2; }
 .scope .ast { font: 21px var(--display); fill: var(--fg); }
 .scope .lab { font: italic 15px var(--display); fill: var(--dim); }
-.teaser-say { max-width: 70ch; margin: 34px auto 18px; text-align: center; font-size: 20px; color: var(--dim); }
+.teaser-say { max-width: 96ch; margin: 16px auto 14px; text-align: center; font-size: 19px; line-height: 1.5; color: var(--dim); }
 .teaser-say b { color: var(--fg); font-weight: 600; }
 .teaser-say em { font-style: italic; color: var(--now); }
 .abstract { max-width: 74ch; margin: 0 auto; display: grid; gap: 12px; text-align: justify; hyphens: auto; font-size: 19px; }
@@ -263,10 +263,14 @@ figcaption.fc { color: var(--dim); font-size: 16px; font-style: italic; margin-t
 .view-tab { flex: none; appearance: none; border: 1px solid transparent; border-bottom: 0; background: transparent; color: var(--dim); font: 500 17px/1 var(--body); padding: 12px 16px 12px; margin-bottom: -1px; border-radius: var(--r) var(--r) 0 0; cursor: pointer; white-space: nowrap; }
 .view-tab:hover { color: var(--fg); }
 .view-tab[aria-selected="true"] { color: var(--fg); background: var(--sheet); border-color: var(--line); font-weight: 600; }
-.view-head { padding: 18px 18px 0; display: grid; gap: 6px; }
+.view-head { margin-top: 18px; display: grid; gap: 6px; }
+.view-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 14px; }
 .view-head h3 { font: italic 400 clamp(20px, 2.2vw, 25px)/1.25 var(--display); }
 .view-head .note { max-width: 92ch; }
-.xt-foot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 270px); gap: 18px 40px; align-items: start; margin-top: 14px; }
+.xt-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 32px; margin-top: 6px; }
+.xt-foot .view-head { flex: 1 1 320px; }
+.xt-foot .jovi { width: min(100%, 240px); }
+.legend-line { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 14px; font-size: 15px; color: var(--dim); }
 
 /* boost test, animated */
 .panel canvas.bsx-cv { aspect-ratio: 500 / 430; background: transparent; border: 1px solid var(--line-soft); border-radius: var(--r); }
@@ -366,7 +370,10 @@ footer p + p { margin-top: 8px; font-style: italic; }
 }
 @media (max-width: 560px) {
   body { font-size: 17.5px; }
-  .teaser-say { font-size: 18px; text-align: left; }
+  .teaser-say { font-size: 17px; text-align: left; margin: 12px auto 10px; }
+  .demo-clips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -4px; padding-inline: 4px; }
+  .demo-clips .chip { flex: none; }
+  .motto small { font-size: 11px; letter-spacing: .08em; }
   .abstract { text-align: left; font-size: 18px; }
   .panels.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .panels.three .panel:last-child { grid-column: 1 / -1; max-width: 62%; justify-self: center; width: 100%; }
@@ -392,7 +399,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
   <div class="masthead">
     <figure class="side">
       <div class="oval"><div class="portrait" role="img" aria-label="Engraved portrait of Galileo Galilei by Ottavio Leoni, 1624"></div></div>
-      <figcaption>Galileo Galilei, engraved by Ottavio Leoni, 1624</figcaption>
     </figure>
     <div class="mast">
       <p class="motto"><q lang="it">Eppur si muove.</q><small>Galileo Galilei, attributed · “And yet it moves.”</small></p>
@@ -434,7 +440,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
           <text x="180" y="34" class="lab">Occ.</text>
         </svg>
       </div>
-      <figcaption>Jupiter on 7 January 1610, as Galileo first recorded it</figcaption>
     </figure>
   </div>
 
@@ -449,8 +454,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
     </div>
 
     <div class="view" id="player" role="tabpanel" aria-labelledby="tab-player">
-    <div class="view-head"><h3>Same backbone, same inputs. Only the keys moved.</h3><p class="note">Two cameras, four input frames, an LVSM transformer trained from scratch. Each clip is rendered at every frame of the input window; the held-out frames between the inputs are where a static encoding has to guess.</p></div>
-    <div class="inst-bar"><div class="chip-group"><span>Show</span><div class="chips" role="group" aria-label="Display"><button class="chip" data-mode="image" aria-pressed="true">Rendering</button><button class="chip" data-mode="error" aria-pressed="false">Error vs. ground truth ×4</button></div></div><div class="chip-group" style="margin-left:auto"><span>Zoom</span><div class="chips"><button class="chip" id="pl-zout" aria-label="Zoom out">−</button><button class="chip" id="pl-zin" aria-label="Zoom in">+</button><button class="chip" id="pl-zreset">Moving region</button></div></div></div>
     <div class="inst-body">
       <div class="panels three">
         <div class="panel"><div class="cap"><span class="b"><select id="pl-base" aria-label="Baseline encoding"></select></span><small id="pl-pb"></small></div><canvas id="pl-b" width="512" height="512"></canvas></div>
@@ -463,16 +466,15 @@ footer p + p { margin-top: 8px; font-style: italic; }
         <select id="pl-speed" aria-label="Playback speed"><option value="3" selected>0.1×</option><option value="6">0.2×</option><option value="15">0.5×</option><option value="30">1×</option></select>
       </div>
       <canvas id="psnr" style="cursor:pointer;touch-action:none" width="1100" height="150" aria-label="PSNR on the moving region per frame"></canvas>
+      <div class="view-ctrl"><div class="chip-group"><span>Show</span><div class="chips" role="group" aria-label="Display"><button class="chip" data-mode="image" aria-pressed="true">Rendering</button><button class="chip" data-mode="error" aria-pressed="false">Error vs. ground truth ×4</button></div></div><div class="chip-group" style="margin-left:auto"><span>Zoom</span><div class="chips"><button class="chip" id="pl-zout" aria-label="Zoom out">−</button><button class="chip" id="pl-zin" aria-label="Zoom in">+</button><button class="chip" id="pl-zreset">Moving region</button></div></div></div>
       <div style="display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;margin-top:12px">
-        <p class="note" style="margin-right:auto"><b>Press and hold</b> a rendering to flip it to the ground truth. <b>Drag</b> any panel to move the zoomed region. Click the curve to jump to a frame. RayRoPE and GALILEO are queried at ten times per video frame, so 0.1× plays smoothly; the ground truth (and the other baselines) exist only at the 30 video frames per second and hold in between. PSNR<sub>dyn</sub> is computed at the video frames on the moving region of the ground truth; coloured ticks are the four input times.</p>
         <label class="toggle"><input type="checkbox" id="pl-outline" checked> True outline of the moving region</label>
       </div>
+      <div class="view-head"><h3>Same backbone, same inputs. Only the keys moved.</h3></div>
     </div>
     </div>
 
     <div class="view" id="xt" role="tabpanel" aria-labelledby="tab-xt" hidden>
-    <div class="view-head"><h3>A moving object is a slanted line in space-time. RayRoPE draws a staircase.</h3><p class="note">Each column shows a rendering and, below it, one row of its pixels stacked over time: position runs right, time runs up. Both models are queried ten times between video frames. Only one of them moves the object between the inputs.</p></div>
-    <div class="inst-bar"><div class="chips" role="group" aria-label="Query rate of the two models" style="margin-left:auto"><button class="chip" data-fps="30" aria-pressed="false">30 queries/s</button><button class="chip" data-fps="300" aria-pressed="true">300 queries/s</button></div></div>
     <div class="inst-body">
       <div class="xt-grid">
         <div class="panel"><div class="cap"><span class="b">RayRoPE</span><small>stands still, then jumps</small></div><canvas class="xt-f" id="xt-fb" width="512" height="512"></canvas><canvas class="xt-s" id="xt-b" width="512" height="400"></canvas></div>
@@ -482,20 +484,19 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <div class="tl" style="margin-top:12px">
         <button class="icon-btn" id="xt-play" aria-label="Pause">❚❚</button>
         <div class="tl-track" id="xt-track" role="slider" aria-label="Query time" tabindex="0"></div>
+        <div class="chips" role="group" aria-label="Query rate of the two models"><button class="chip" data-fps="30" aria-pressed="false">30 queries/s</button><button class="chip" data-fps="300" aria-pressed="true">300 queries/s</button></div>
       </div>
       <div class="tl-read" id="xt-read" style="text-align:left;margin-top:8px"></div>
       <div class="xt-foot">
-  <p class="note" ><b>Drag the white line</b> on any rendering to choose the row that is sliced. <b>Drag on a slice</b> (or the time bar) to set the query time: the three renderings above show that instant, and the line across the slices marks it. Coloured ticks are the four input times. The ground truth exists only at the video's 30 frames per second, so its slice is stepped by construction; the models can be queried at any time.</p>
+      <div class="view-head"><h3>A moving object is a slanted line in space-time. RayRoPE draws a staircase.</h3></div>
         <figure class="jovi">
       <svg id="jovilog" viewBox="0 0 300 236" role="img" aria-label="Jupiter and its four moons drawn one row per night; joined across nights, the outer moons trace waves"></svg>
-      <figcaption>Jupiter's four moons, one row per night, in the notation of Galileo's 1610 log (Ori. east, Occ. west). Joined across nights, the two outer moons trace waves. Drawn from circular orbits with the true periods, not copied from his log.</figcaption>
     </figure>
       </div>
     </div>
     </div>
 
     <div class="view" id="keys" role="tabpanel" aria-labelledby="tab-keys" hidden>
-    <div class="view-head"><h3>Where the encoding places each input patch.</h3><p class="note">Real model output: every input patch of the left camera, lifted to 3D at the depth the model predicts, and for GALILEO moved along its predicted velocity to the query time.</p></div>
     <div class="inst-body">
       <div class="panels two">
         <div class="panel" style="position:relative"><span class="hint" id="keys-hint">drag to look around</span><div class="cap"><span class="b">RayRoPE</span><small>keys stay where they were captured</small></div><canvas id="keys-b" width="640" height="640" aria-label="Input patches lifted to 3D at their capture-time positions"></canvas></div>
@@ -511,12 +512,12 @@ footer p + p { margin-top: 8px; font-style: italic; }
         <label class="toggle" style="margin-left:auto"><input type="checkbox" id="keys-tint"> Colour by input time</label>
         <button class="chip" id="keys-reset">Reset view</button>
       </div>
-      <p class="note" style="margin-top:12px">Every tile is one 8 × 8 input patch of the left camera, lifted to the depth the model predicts, from four input frames. For display, a tile whose depth or motion disagrees with its neighbours takes their median; the colours mark moving tiles near the true moving region at <span class="m">t<sub>a</sub></span>, and on Objaverse the empty white backdrop is not drawn. Drag to look around. Slide the query time: RayRoPE's four copies of the moving object never meet, while GALILEO's land on one place and travel together.</p>
       <div class="renders">
-        <figure><canvas id="keys-rb" width="168" height="168"></canvas><figcaption><b class="b">RayRoPE rendering</b>at the held-out time <span class="m">t<sub>a</sub></span><br><span class="mono" id="keys-pb"></span></figcaption></figure>
-        <figure><canvas id="keys-rg" width="168" height="168"></canvas><figcaption><b class="g">GALILEO rendering</b>same inputs, keys moved to <span class="m">t<sub>a</sub></span><br><span class="mono" id="keys-pg"></span></figcaption></figure>
-        <figure><canvas id="keys-rt" width="168" height="168"></canvas><figcaption><b>Ground truth</b>white line: the moving region at <span class="m">t<sub>a</sub></span>, the same on all three</figcaption></figure>
+        <figure><canvas id="keys-rb" width="168" height="168"></canvas><figcaption><b class="b">RayRoPE rendering</b><span class="mono" id="keys-pb"></span></figcaption></figure>
+        <figure><canvas id="keys-rg" width="168" height="168"></canvas><figcaption><b class="g">GALILEO rendering</b><span class="mono" id="keys-pg"></span></figcaption></figure>
+        <figure><canvas id="keys-rt" width="168" height="168"></canvas><figcaption><b>Ground truth</b></figcaption></figure>
       </div>
+      <div class="view-head"><h3>Where the encoding places each input patch.</h3></div>
     </div>
     </div>
   </div>
@@ -546,26 +547,24 @@ footer p + p { margin-top: 8px; font-style: italic; }
   </div>
   <div class="eq" role="math" aria-label="x hat equals x plus v b times t a minus t b">
     <span class="hat"><i>x̂</i></span> = <i>x</i> + <i>v<sub>b</sub></i> (<i>t<sub>a</sub></i> − <i>t<sub>b</sub></i>)
-    <small>Before encoding key <span class="m">b</span> for a query at time <span class="m">t<sub>a</sub></span>, shift its 3D points by its velocity times the time offset. Queries, the key camera and the attention operator are untouched. For static content or equal times, this is exactly the original encoding.</small>
   </div>
   <div class="inst" id="mth">
-    <div class="inst-bar"><span class="eyebrow">Illustration · Galileo's ship, sailing at constant velocity</span></div>
+    <div class="inst-bar"><span class="eyebrow">Illustration</span></div>
     <div class="inst-body">
       <div class="mth-grid">
-        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><canvas id="mth-a" aria-label="The star on the ship's main sail at t_b is matched to the frames at t_b minus and plus delta t, first to a token, then refined to a pixel"></canvas><figcaption><span class="k">a · Match</span><h3>Find each patch in the neighbouring frames</h3><p>Every input token is matched to the frames of its own camera at <span class="m">t<sub>b</sub> ± Δt</span>, coarse to fine: token-level matching on transformer features, refined to pixel accuracy by a small CNN.</p></figcaption></figure>
-        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><canvas id="mth-b" aria-label="The patch and its matches are lifted along the rays of the static key camera; a line through the three positions of the ship gives the velocity v_b"></canvas><figcaption><span class="k">b · Lift</span><h3>Lift the matches to 3D and fit a velocity</h3><p>The patch and its matches are lifted along their rays at the depths the encoding already uses. A least-squares line through them gives a constant 3D velocity <span class="m">v<sub>b</sub></span>.</p></figcaption></figure>
-        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><canvas id="mth-c" aria-label="For the query time t_a the ship's key is moved to x hat; RayRoPE encodes it at x, GALILEO at x hat"></canvas><figcaption><span class="k">c · Transport</span><h3>Move the key, then encode as before</h3><p>For each query time the key's points are moved to <span class="m">x̂</span> and encoded as in RayRoPE. The same key gets a different position for a different query time. No external model at test time.</p></figcaption></figure>
+        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><canvas id="mth-a" aria-label="The star on the ship's main sail at t_b is matched to the frames at t_b minus and plus delta t, first to a token, then refined to a pixel"></canvas><figcaption><span class="k">a · Match</span><h3>Find each patch in the neighbouring frames</h3></figcaption></figure>
+        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><canvas id="mth-b" aria-label="The patch and its matches are lifted along the rays of the static key camera; a line through the three positions of the ship gives the velocity v_b"></canvas><figcaption><span class="k">b · Lift</span><h3>Lift the matches to 3D and fit a velocity</h3></figcaption></figure>
+        <figure class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><canvas id="mth-c" aria-label="For the query time t_a the ship's key is moved to x hat; RayRoPE encodes it at x, GALILEO at x hat"></canvas><figcaption><span class="k">c · Transport</span><h3>Move the key, then encode as before</h3></figcaption></figure>
       </div>
       <div class="tl">
         <button class="icon-btn" id="mth-play" aria-label="Pause">❚❚</button>
         <div class="tl-track" id="mth-track" role="slider" aria-label="Animation time" tabindex="0"></div>
       </div>
-      <p class="note" style="margin-top:12px">An illustration, not model output. In his <i>Dialogue</i> (1632) Galileo argued that nothing on a ship sailing at constant velocity reveals its motion; here such a ship passes Venice, with the bell tower of San Marco on the shore, and key <span class="m">b</span> is the patch with the star on its main sail. Constant velocity between neighbouring frames is also what GALILEO assumes for every key. The key camera is not moved: it is where the observer was, not where the content is. After the three steps, <span class="m">t<sub>a</sub></span> sweeps over the input window and the transported key follows. Click a step to replay it. The paper's Fig. 3 shows the same steps on the model's own matches, depths and velocity.</p>
     </div>
   </div>
   <div class="props" style="margin-top:34px">
-    <div class="prop"><h3>Co-observation is restored</h3><p>If two keys see the same 3D point moving at constant velocity, transport maps both to the same query-relative position <span class="m">T<sub>a</sub>(x(t<sub>a</sub>))</span>. Without it they differ by <span class="m">R<sub>a</sub><sup>⊤</sup>v (t<sub>b</sub> − t<sub>b′</sub>)</span>, which breaks the consistency RayRoPE was designed for.</p></div>
-    <div class="prop"><h3>Invariant to Galilean boosts</h3><p>Describe the scene from a frame moving at constant velocity <span class="m">w</span>. Transported content coordinates do not change; static ones shift by <span class="m">−R<sub>a</sub><sup>⊤</sup>w (t<sub>a</sub> − t<sub>b</sub>)</span>. A static encoding is only right for content at rest in the frame its poses happen to use.</p></div>
+    <div class="prop"><h3>Co-observation is restored</h3></div>
+    <div class="prop"><h3>Invariant to Galilean boosts</h3></div>
   </div>
 </div></section>
 
@@ -582,22 +581,19 @@ footer p + p { margin-top: 8px; font-style: italic; }
     </div>
     <div class="inst-body">
       <div class="att-wrap">
-        <div class="panel att-qp"><div class="cap"><span>Query patch</span><small>at <span class="m">t<sub>a</sub></span></small></div><canvas id="att-q" width="384" height="384"></canvas><p class="note" style="margin-top:8px">Dashed box: the region shown on the right, the same in every input frame.</p></div>
+        <div class="panel att-qp"><div class="cap"><span>Query patch</span><small>at <span class="m">t<sub>a</sub></span></small></div><canvas id="att-q" width="384" height="384"></canvas></div>
         <div class="att-grid" id="att-grid"></div>
       </div>
-      <p class="note" style="margin-top:14px"><b id="att-say"></b></p>
-      <p class="note" style="margin-top:6px"><span class="keyline" style="color:var(--now)"></span>solid circle: where the patch's content is in that input frame (optical flow from the ground truth). <span class="keyline" style="border-top-style:dashed;color:var(--truth)"></span>dashed circle: where a static scene would put it. Heat: the query's attention over the frame's 8 × 8 tokens, averaged over heads, each map scaled to its own peak; the outlined square is the token it attends to most. Percentages: share of the frame's attention inside a disc around each place (only where the two places are at least 10 px apart). In layer 1, before velocities exist, the two models look alike.</p>
+      <div class="legend-line"><span><span class="keyline" style="color:var(--now)"></span>content (true motion)</span><span><span class="keyline" style="border-top-style:dashed;color:var(--truth)"></span>where a static scene would put it</span><span>outlined square: most attended token</span></div>
     </div>
   </div>
   <div class="cols" style="margin-top:26px">
     <div>
       <h3>Over 4,587 moving patch-frame pairs, 80 Stereo4D test clips sampled</h3>
-      <p class="note" style="margin:8px 0 16px">Share of a frame's attention inside a disc around each place, for pairs whose two places are at least 10 px apart.</p>
       <div class="bars" id="att-bars"></div>
     </div>
     <div>
       <h3>The switch happens after the first layer</h3>
-      <p class="note" style="margin:8px 0 16px">GALILEO's first layer runs before velocities exist and still attends like RayRoPE. Share of attention at the content, per layer.</p>
       <canvas id="att-layers" width="560" height="200" style="display:block;width:100%;height:auto"></canvas>
     </div>
   </div>
@@ -609,22 +605,21 @@ footer p + p { margin-top: 8px; font-style: italic; }
     <p class="claim">Describe the same clip from a moving frame. Nothing physical changes.</p>
   </div>
   <div class="inst" id="bsx" style="margin-bottom:22px">
-    <div class="inst-bar"><span class="eyebrow">How the test works · schematic</span><span class="tl-read" id="bsx-drift" aria-live="off"></span></div>
+    <div class="inst-bar"><span class="eyebrow">Schematic</span><span class="tl-read" id="bsx-drift" aria-live="off"></span></div>
     <div class="inst-body">
       <div class="panels two">
         <div class="panel"><div class="cap"><span class="b">RayRoPE</span><small id="bsx-pr"></small></div><canvas class="bsx-cv" id="bsx-r" aria-label="RayRoPE under a boost: the static tower's keys from the four input times land in four places relative to the query camera"></canvas></div>
         <div class="panel"><div class="cap"><span class="g">+ GALILEO</span><small id="bsx-pg"></small></div><canvas class="bsx-cv" id="bsx-g" aria-label="GALILEO under a boost: the tower's fitted velocity equals the boost, and transport brings all four keys back onto the tower"></canvas></div>
       </div>
       <div class="bsx-steps">
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><span class="k">a · Change the frame</span><h3>Same photos, shifted cameras</h3><p>Add <span class="m">w·t</span> to every camera. No pixel changes, but every point gains velocity <span class="m">w</span>: the tower moves at <span class="m">w</span>, the ship at <span class="m">v + w</span>.</p></div>
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><span class="k">b · RayRoPE</span><h3>The whole scene splits</h3><p>Keys stay where they were lifted, so tower and ship each appear four times. Static regions lose 7.2 dB at 16 px.</p></div>
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><span class="k">c · GALILEO</span><h3>The boost becomes a velocity</h3><p>Fitted velocities absorb <span class="m">w</span>; transport cancels it for the whole scene. Static regions lose only 1.3 dB.</p></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><span class="k">a · Change the frame</span><h3>Same photos, shifted cameras</h3></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><span class="k">b · RayRoPE</span><h3>The whole scene splits</h3></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><span class="k">c · GALILEO</span><h3>The boost becomes a velocity</h3></div>
       </div>
       <div class="tl">
         <button class="icon-btn" id="bsx-play" aria-label="Pause">❚❚</button>
         <div class="tl-track" id="bsx-track" role="slider" aria-label="Animation time" tabindex="0"></div>
       </div>
-      <p class="note" style="margin-top:12px"><b>Why this test.</b> What counts as "at rest" depends on the frame the poses use. A static encoding is right only for what rests in that frame, so the boost exposes it without changing a pixel.</p>
     </div>
   </div>
   <div class="inst" id="bst">
@@ -643,10 +638,8 @@ footer p + p { margin-top: 8px; font-style: italic; }
         <div>
           <div class="cap"><span>Static-region PSNR vs. frame speed</span><small>80 Stereo4D test clips</small></div>
           <canvas id="bst-chart" width="560" height="330" style="display:block;width:100%;height:auto"></canvas>
-          <p class="note" style="margin-top:10px">At 16 px: RayRoPE <b>−7.2 dB</b>, GALILEO <b>−1.3 dB</b>.</p>
         </div>
       </div>
-      <p class="note" id="bst-note" style="margin-top:14px"></p>
     </div>
   </div>
 </div></section>
@@ -658,19 +651,15 @@ footer p + p { margin-top: 8px; font-style: italic; }
     <p class="lede">All methods share the LVSM backbone and recipe and are trained from scratch for 20k steps; they differ only in the positional encoding, and every one carries a time signal. RayRoPE gets the same depth losses as GALILEO. No method uses ground-truth depth, flow or masks at test time.</p>
   </div>
   <div class="tbl" id="tab-main"></div>
-  <p class="note" style="margin-top:10px">PSNR<sub>dyn</sub>: PSNR on pixels that move more than 1.5 px from the nearest input time. tOF: agreement with ground-truth motion. δ<sub>avg</sub>: how closely a point tracker follows moving points. JEDi: distance between V-JEPA feature distributions. Novel views and novel times weighted equally. Δ rows: change from the base encoding; every one is beyond noise (90% bootstrap interval; paired permutation test for JEDi). Plücker failed to train on Objaverse.</p>
 
   <div class="cols" style="margin-top:54px">
     <div>
       <h3>It is where the keys are, not that the model knows about motion</h3>
-      <p class="note" style="margin:8px 0 18px">Syn4D, PSNR<sub>dyn</sub> gain over RayRoPE (19.88 dB). Training the matcher without moving keys, or feeding the same velocities as token features, barely helps. Moving the keys with those velocities does.</p>
       <div class="hb" id="hb-abl"></div>
     </div>
     <div>
       <h3>Switch transport off at test time and the gain is gone</h3>
-      <p class="note" style="margin:8px 0 18px">The same GALILEO weights with every velocity set to zero fall to RayRoPE's level or below, so the model relies on the moved keys rather than on motion supervision alone.</p>
       <div class="tbl" id="tab-off"></div>
-      <p class="note" style="margin-top:18px">The gains hold with four times longer training on Syn4D (RayRoPE at 80k steps stays below GALILEO at 20k in PSNR<sub>dyn</sub> and every video metric) and with twice as many layers on Stereo4D.</p>
     </div>
   </div>
 </div></section>
@@ -683,17 +672,13 @@ footer p + p { margin-top: 8px; font-style: italic; }
   <div class="cols">
     <div style="display:grid;gap:14px;align-content:start">
       <h3>3D point tracking with a pretrained tracker</h3>
-      <p class="note">Added as an adapter to frozen ARROW, GALILEO tracks points more accurately than RayRoPE with a temporal RoPE at every time. A plain adapter of the same size helps less, so the gain is not the added parameters.</p>
       <div class="plate narrow"><img id="fig-tracks" alt="3D tracks with ARROW on two dynamic Objaverse objects: ground truth, plain adapter, RayRoPE and GALILEO" loading="lazy"></div>
       <div class="tbl" id="tab-track"></div>
-      <p class="note">Dynamic Objaverse. EPE: 3D end-point error; APD: share of points within 1 to 16%, both relative to object size.</p>
     </div>
     <div style="display:grid;gap:14px;align-content:start">
       <h3>A 5B-parameter video generator for driving scenes</h3>
-      <p class="note">On Wan2.2-TI2V-5B with AgentGarten's geometry conditioning, 4 s of Waymo front-camera video are generated from the first frame, per-frame geometry and vehicle boxes. Each key is moved by the velocity of its vehicle's 3D box.</p>
       <div class="plate narrow"><img id="fig-driving" alt="Generated Waymo frames: RayRoPE draws the moving vehicle off its place, GALILEO draws it in place" loading="lazy"></div>
       <div class="tbl" id="tab-drive"></div>
-      <p class="note">PSNR<sub>dyn</sub> on moving vehicles, overall and per second, and their silhouette IoU (recording: .879).</p>
     </div>
   </div>
 </div></section>
@@ -719,8 +704,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
 </main>
 
 <footer><div class="wrap">
-  <p>Every interactive figure on this page is drawn in your browser from saved model outputs: rendered test clips, predicted depths and velocities, attention maps and boost renders. Nothing is re-touched. Clips: Stereo4D, Syn4D, dynamic Objaverse. Baselines: Plücker, PRoPE, GTA, URoPE, RayRoPE, all with a time signal.</p>
-  <p>Portrait: Ottavio Leoni, Galileo Galilei, engraving, 1624 (public domain, via Wikimedia Commons). The telescope is drawn after Galileo's instruments; the note beside it follows his record of 7 January 1610.</p>
+  <p>Portrait: Ottavio Leoni, 1624 (public domain). Telescope, ship and Jupiter log are drawn for this page.</p>
 </div></footer>
 
 <script src="assets/data.js"></script>

@@ -488,7 +488,7 @@
       // per input frame where the two places are >= 10 px apart: is the most-attended token nearer the content or the static place?
       const side = (key) => { let n = 0, toC = 0; cur.views.forEach((v, k) => { const c = layer < 0 ? v[key + 'c'] : (v[key + 'Lc'] || [])[layer]; if (!v.ok || c == null) return; const a = peaks[key][k], x = (a % 32) * 8 + 4, y = Math.floor(a / 32) * 8 + 4; n++; if (Math.hypot(x - v.pt[0], y - v.pt[1]) < Math.hypot(x - v.ps[0], y - v.ps[1])) toC++; }); return [toC, n]; };
       const [bc, bn] = side('b'), [gc, gn] = side('g');
-      $('att-say').textContent = bn ? `Most-attended token nearer the patch's real content than its static place: RayRoPE in ${bc} of ${bn} input frames, GALILEO in ${gc} of ${gn}.` : '';
+      if ($('att-say')) $('att-say').textContent = bn ? `Most-attended token nearer the patch's real content than its static place: RayRoPE in ${bc} of ${bn} input frames, GALILEO in ${gc} of ${gn}.` : '';
     }
     async function load(c) {
       const my = ++token, [a, g] = await Promise.all([loadImg(c.atlas), loadImg(c.gt)]);
@@ -547,7 +547,7 @@
         $('bst-p' + key).textContent = `static ${fmt(s[key][0])} · moving ${fmt(s[key][1])} dB`;
       });
       const r0 = cur.rows[0], d = (k, j) => { const v = s[k][j] - r0[k][j]; return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + ' dB'; };
-      $('bst-note').innerHTML = s.label === 'obj1'
+      if ($('bst-note')) $('bst-note').innerHTML = s.label === 'obj1'
         ? `<b>Frame moving with the object.</b> Background: RayRoPE ${d('b', 0)}, GALILEO ${d('g', 0)}.`
         : s.px === 0 ? `<b>Original frame.</b> White line: the moving region.`
           : `<b>Drift ${s.px.toFixed(0)} px.</b> Static region: RayRoPE ${d('b', 0)}, GALILEO ${d('g', 0)}.`;
