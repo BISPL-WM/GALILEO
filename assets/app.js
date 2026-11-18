@@ -1198,6 +1198,16 @@
     const link = (id, url, label) => { const a = $(id); if (url) { a.href = url; a.removeAttribute('aria-disabled'); if (label) (a.querySelector('span') || a).textContent = label; } };
     link('link-paper', SITE.paper); link('link-arxiv', SITE.arxiv, 'arXiv'); link('link-code', SITE.code, 'Code');
     for (const k of ['method', 'tracks', 'driving']) { const el = $('fig-' + k); if (el) el.src = GAL.figs[k]; }
+    // overview video: a button opens it over the page; closing pauses it
+    const vm = $('vmodal'), vid = $('intro-video');
+    if (vm && vid) {
+      let back = null;
+      const close = () => { vid.pause(); vm.hidden = true; document.body.style.overflow = ''; if (back) back.focus(); };
+      $('open-video').onclick = (e) => { back = e.currentTarget; vm.hidden = false; document.body.style.overflow = 'hidden'; $('close-video').focus(); vid.play().catch(() => {}); };
+      $('close-video').onclick = close;
+      vm.onclick = (e) => { if (e.target === vm) close(); };
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && !vm.hidden) close(); });
+    }
     $('copy-bib').onclick = async () => {
       const b = $('copy-bib');
       try { await navigator.clipboard.writeText($('bib').textContent); b.textContent = 'Copied'; }
