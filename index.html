@@ -607,25 +607,24 @@ footer p + p { margin-top: 8px; font-style: italic; }
   <div class="head">
     <h2>The Galilean Boost Test</h2>
     <p class="claim">Describe the same clip from a moving frame. Nothing physical changes.</p>
-    <p class="lede">Shift every camera position by <span class="m">w·t</span> and keep the images, rotations, intrinsics and timestamps. The scene and the ground truth are identical; poses enter the models only through the encoding. Any change in the output is the encoding's doing.</p>
   </div>
   <div class="inst" id="bsx" style="margin-bottom:22px">
-    <div class="inst-bar"><span class="eyebrow">How the test works · a schematic in the query camera's frame</span><span class="tl-read" id="bsx-drift" aria-live="off"></span></div>
+    <div class="inst-bar"><span class="eyebrow">How the test works · schematic</span><span class="tl-read" id="bsx-drift" aria-live="off"></span></div>
     <div class="inst-body">
       <div class="panels two">
         <div class="panel"><div class="cap"><span class="b">RayRoPE</span><small id="bsx-pr"></small></div><canvas class="bsx-cv" id="bsx-r" aria-label="RayRoPE under a boost: the static tower's keys from the four input times land in four places relative to the query camera"></canvas></div>
         <div class="panel"><div class="cap"><span class="g">+ GALILEO</span><small id="bsx-pg"></small></div><canvas class="bsx-cv" id="bsx-g" aria-label="GALILEO under a boost: the tower's fitted velocity equals the boost, and transport brings all four keys back onto the tower"></canvas></div>
       </div>
       <div class="bsx-steps">
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><span class="k">a · Change the frame</span><h3>Same photos, shifted cameras</h3><p>Describe the clip from a frame moving at constant velocity: add <span class="m">w·t</span> to every camera position and keep the photos, rotations, intrinsics and timestamps. Nothing in the scene or the ground truth changes, but in the new coordinates every point of the scene gains the velocity <span class="m">w</span>: the static background (the tower stands for all of it) moves at <span class="m">w</span>, and the ship's velocity becomes <span class="m">v + w</span>.</p></div>
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><span class="k">b · RayRoPE</span><h3>The whole background splits</h3><p>RayRoPE encodes each key where it was lifted. Relative to the query camera, a static key from time <span class="m">t<sub>b</sub></span> is off by <span class="m">−w (t<sub>a</sub> − t<sub>b</sub>)</span> and the ship's by <span class="m">−(v + w)(t<sub>a</sub> − t<sub>b</sub>)</span>. It is right only for what is at rest in the chosen frame: without a boost that is the tower, never the ship; under a boost, neither. On static content it loses 7.2 dB at a drift of 16 px.</p></div>
-        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><span class="k">c · GALILEO</span><h3>The boost becomes a velocity, and transport removes it</h3><p>No pixel moves, but lifted with the shifted cameras every match moves by <span class="m">w</span> more per unit time, so the tower's fitted velocity is <span class="m">w</span> and the ship's <span class="m">v + w</span>. Moving each key by its own velocity cancels the shift for the whole scene: the tower's keys land on the tower and the ship's on the ship. It loses 1.3 dB on static content and 0.7 dB on moving content.</p></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step a"><span class="k">a · Change the frame</span><h3>Same photos, shifted cameras</h3><p>Add <span class="m">w·t</span> to every camera. No pixel changes, but every point gains velocity <span class="m">w</span>: the tower moves at <span class="m">w</span>, the ship at <span class="m">v + w</span>.</p></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step b"><span class="k">b · RayRoPE</span><h3>The whole scene splits</h3><p>Keys stay where they were lifted, so tower and ship each appear four times. Static regions lose 7.2 dB at 16 px.</p></div>
+        <div class="mth-step" tabindex="0" role="button" aria-label="Play from step c"><span class="k">c · GALILEO</span><h3>The boost becomes a velocity</h3><p>Fitted velocities absorb <span class="m">w</span>; transport cancels it for the whole scene. Static regions lose only 1.3 dB.</p></div>
       </div>
       <div class="tl">
         <button class="icon-btn" id="bsx-play" aria-label="Pause">❚❚</button>
         <div class="tl-track" id="bsx-track" role="slider" aria-label="Animation time" tabindex="0"></div>
       </div>
-      <p class="note" style="margin-top:12px"><b>Why this test.</b> Whether something is at rest depends on the frame the poses happen to use, the point of Galileo's ship. A static encoding is right only for content at rest in that frame. The boost changes the velocity of every point of the scene by the same <span class="m">w</span> without changing a single pixel, so any change in the output comes from the encoding. On the static background, which makes up most of each frame, a boost turns content RayRoPE handled correctly into content it cannot; that is why the gap shows on static regions. GALILEO is robust to the boost: the small loss that remains comes from its first layer, which runs before velocities exist, and from the key camera centres, which are not transported. The drawing is a schematic; the PSNR values are measured on the static and moving regions of 80 Stereo4D test clips. Below, the same test on real clips.</p>
+      <p class="note" style="margin-top:12px"><b>Why this test.</b> What counts as "at rest" depends on the frame the poses use. A static encoding is right only for what rests in that frame, so the boost exposes it without changing a pixel.</p>
     </div>
   </div>
   <div class="inst" id="bst">
@@ -644,7 +643,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
         <div>
           <div class="cap"><span>Static-region PSNR vs. frame speed</span><small>80 Stereo4D test clips</small></div>
           <canvas id="bst-chart" width="560" height="330" style="display:block;width:100%;height:auto"></canvas>
-          <p class="note" style="margin-top:10px">At a drift of 16 px over the input window RayRoPE loses <b>7.2 dB</b> on static content; GALILEO, whose estimated velocities include the frame's motion, loses <b>1.3 dB</b>. GALILEO is robust to the boost; the small loss that remains comes from its first layer, which runs without velocities, and from the key camera centres, which are not transported.</p>
+          <p class="note" style="margin-top:10px">At 16 px: RayRoPE <b>−7.2 dB</b>, GALILEO <b>−1.3 dB</b>.</p>
         </div>
       </div>
       <p class="note" id="bst-note" style="margin-top:14px"></p>

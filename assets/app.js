@@ -548,9 +548,9 @@
       });
       const r0 = cur.rows[0], d = (k, j) => { const v = s[k][j] - r0[k][j]; return (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1) + ' dB'; };
       $('bst-note').innerHTML = s.label === 'obj1'
-        ? `<b>Frame moving with the object.</b> The object is now at rest and the background moves instead. RayRoPE: ${d('b', 1)} on the object, ${d('b', 0)} on the background. GALILEO: ${d('g', 1)} and ${d('g', 0)}. White line: the moving region in the ground truth.`
-        : s.px === 0 ? `<b>The frame of the dataset's poses.</b> PSNR of this held-out frame on its static and moving regions. White line: the moving region in the ground truth.`
-          : `<b>Frame drifting ${s.px.toFixed(0)} px over the input window.</b> Change from the original frame on this clip's static region: RayRoPE ${d('b', 0)}, GALILEO ${d('g', 0)}.`;
+        ? `<b>Frame moving with the object.</b> Background: RayRoPE ${d('b', 0)}, GALILEO ${d('g', 0)}.`
+        : s.px === 0 ? `<b>Original frame.</b> White line: the moving region.`
+          : `<b>Drift ${s.px.toFixed(0)} px.</b> Static region: RayRoPE ${d('b', 0)}, GALILEO ${d('g', 0)}.`;
       chart();
     }
     async function load(c) {
