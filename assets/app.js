@@ -4,7 +4,7 @@
 
   // ------------------------------------------------------------------ edit these when the paper is public
   const SITE = {
-    authors: '<span class="an">Youngmin Kim<sup>*</sup></span> · <span class="an">Seonghyun Jin<sup>*</sup></span> · <span class="an">Jong Chul Ye<sup>†</sup></span>',   // as in the arXiv version (main_arxiv_new4.tex)
+    authors: '<span class="an"><a href="https://ggred0123.github.io" target="_blank" rel="noopener">Youngmin Kim</a><sup>*</sup></span> · <span class="an"><a href="https://jinotter3.github.io/" target="_blank" rel="noopener">Seonghyun Jin</a><sup>*</sup></span> · <span class="an"><a href="https://bispl-website.github.io/" target="_blank" rel="noopener">Jong Chul Ye</a><sup>†</sup></span>',   // as in the arXiv version (main_arxiv_new4.tex)
     paper: 'assets/galileo_paper.pdf',
     arxiv: null,                           // 'https://arxiv.org/abs/....'
     code: null,                            // 'https://github.com/...'
@@ -24,6 +24,7 @@
   if (document.fonts) document.fonts.ready.then(redraw);
   const SUB = ['₀', '₁', '₂', '₃'];
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DEMO = { onEnd: null };                            // the merged figure: told when a view's playback wraps
   const PLAIN = window.GAL_STYLE === 'plain';
   const SANS = '"Source Sans 3", "Helvetica Neue", Arial, sans-serif';
   const MONO = PLAIN ? SANS : '"EB Garamond", Garamond, "Times New Roman", serif';
@@ -189,10 +190,11 @@
       if (!sc || !playing) return;
       const [t0, t3] = [sc.times[0], Math.max(sc.times[3], sc.ta)];
       tau += dir * dt * (t3 - t0) / 4.5;
-      if (tau > t3) { tau = t3; dir = -1; } else if (tau < t0) { tau = t0; dir = 1; }
+      if (tau > t3) { tau = t3; dir = -1; } else if (tau < t0) { tau = t0; dir = 1; if (DEMO.onEnd) DEMO.onEnd('keys'); }
       tl.set(tau); render(t);
     });
-    return { load: (id) => { const s = GAL.keys.find((k) => k.id === id); if (s) load(s); } };
+    return { load: (id) => { const s = GAL.keys.find((k) => k.id === id); if (s) load(s); },
+      restart: () => { if (sc) { tau = sc.times[0]; dir = 1; if (tl) tl.set(tau); } setPlay(true); } };
   }
 
   // ================================================================== 2. rendered clips
@@ -330,20 +332,21 @@
       if (!clip || !playing || hold) return;
       if (Math.abs(pos - t) > 1) pos = t;
       pos += dt * +$('pl-speed').value;                     // the select's value is video frames per second
-      if (pos > clip.n - 1 + 0.5) pos = 0;
+      if (pos > clip.n - 1 + 0.5) { pos = 0; if (DEMO.onEnd) DEMO.onEnd('player'); }
       const nt = snap(pos);
       if (nt !== t) { t = nt; tl.set(t); render(); }
     });
     addEventListener('resize', () => clip && chart());
 
-    return { load: (id) => { const c = GAL.clips.find((x) => x.id === id); if (c) load(c); } };
+    return { load: (id) => { const c = GAL.clips.find((x) => x.id === id); if (c) load(c); },
+      restart: () => { t = 0; pos = 0; if (tl) tl.set(0); setPlay(true); if (clip) render(); } };
   }
 
   // ================================================================== the merged figure: one sample list, three views
   // the samples of the space-time slices; each view loads the chosen sample when it is first shown
   function demo(api) {
     const VIEWS = { player: api.player, xt: api.spacetime, keys: api.keysDemo };
-    const ids = ['train', 'singer', 'car', 'float', 'fish', 'traveler', 'soviet', 'walker'];
+    const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'];
     const list = ids.map((id) => GAL.clips.find((c) => c.id === id)).filter((c) => c && GAL.keys.some((k) => k.id === c.id));
     let view = 'player', clip = list[0].id;
     const loaded = {}, btns = [];
@@ -359,6 +362,20 @@
       b.title = c.dataset === 'Stereo4D' ? 'Stereo4D, real video' : c.dataset;
       b.onclick = () => { clip = c.id; show(); }; host.appendChild(b); btns.push(b);
     }
+    // auto-advance: when a view's playback wraps, show the next view; after the last one, the next sample
+    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto');
+    let auto = !REDUCED;
+    const setAuto = (on) => { auto = on; if (ab) ab.setAttribute('aria-pressed', on); };
+    if (ab) ab.onclick = () => setAuto(!auto);
+    setAuto(auto);
+    DEMO.onEnd = (v) => {
+      if (!auto || v !== view) return;
+      const i = ORDER.indexOf(view);
+      if (i < ORDER.length - 1) view = ORDER[i + 1];
+      else { view = ORDER[0]; clip = list[(list.findIndex((c) => c.id === clip) + 1) % list.length].id; }
+      show();
+      if (VIEWS[view] && VIEWS[view].restart) VIEWS[view].restart();
+    };
     document.querySelectorAll('#demo .view-tab').forEach((t) => {
       t.onclick = () => { view = t.dataset.view; show(); };
       t.onkeydown = (e) => {
@@ -427,11 +444,12 @@
       if (!cur || !playing) return;
       if (Math.abs(pos - t) > 1) pos = t;
       pos += dt * 3;                                        // 0.1x: three video frames a second
-      if (pos > cur.n - 1 + 0.5) pos = 0;
+      if (pos > cur.n - 1 + 0.5) { pos = 0; if (DEMO.onEnd) DEMO.onEnd('xt'); }
       const nt = snap(pos);
       if (nt !== t) { t = nt; tl.set(t); render(); }
     });
-    return { load: (id) => { const c = items.find((x) => x.id === id); if (c) load(c); } };
+    return { load: (id) => { const c = items.find((x) => x.id === id); if (c) load(c); },
+      restart: () => { t = pos = 0; if (tl) tl.set(0); setPlay(true); if (cur) render(); } };
   }
 
   // ================================================================== 4. attention

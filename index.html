@@ -89,6 +89,8 @@ p { margin: 0; }
 .authors { margin-top: 12px; font-size: 20px; color: var(--fg); }
 .authors sup, .venue sup { font-size: .62em; margin-left: 1px; }
 .authors .an { white-space: nowrap; }
+.authors a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+.authors a:hover { color: var(--now); border-color: var(--now); }
 .affil { margin-top: 4px; font-size: 18px; color: var(--dim); }
 .venue { margin-top: 2px; font-size: 15.5px; font-style: italic; color: var(--faint); }
 .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
@@ -268,6 +270,15 @@ figcaption.fc { color: var(--dim); font-size: 16px; font-style: italic; margin-t
 .vmodal-x { position: absolute; top: -44px; right: 0; width: 36px; height: 36px; border-radius: 50%; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff; font: 400 24px/1 var(--body); cursor: pointer; }
 .vmodal-x:hover { background: rgba(255,255,255,.12); }
 
+/* auto-advance switch of the merged figure */
+.auto-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; height: 31px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r); background: transparent; color: var(--dim); font: 500 15px/1 var(--body); cursor: pointer; white-space: nowrap; flex: none; }
+.auto-btn:hover { color: var(--fg); }
+.auto-btn .sw { position: relative; width: 26px; height: 14px; border-radius: 7px; background: var(--line); transition: background .2s; }
+.auto-btn .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--sheet); transition: transform .2s; }
+.auto-btn[aria-pressed="true"] { color: var(--fg); }
+.auto-btn[aria-pressed="true"] .sw { background: var(--now); }
+.auto-btn[aria-pressed="true"] .sw::after { transform: translateX(12px); }
+
 /* method, animated */
 .mth-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .mth-step { margin: 0; display: grid; gap: 10px; align-content: start; cursor: pointer; border-radius: var(--r); padding: 6px; border: 1px solid transparent; transition: border-color .3s, opacity .3s; opacity: .62; }
@@ -395,7 +406,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <p class="motto"><q lang="it">Eppur si muove.</q><small>Galileo Galilei, attributed · “And yet it moves.”</small></p>
       <h1><span class="h1-name">GALILEO</span><span class="h1-rest">Geometric RoPE with Galilean Key Transport for Dynamic Scenes</span></h1>
       <div class="timerule" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <p class="authors" id="authors"><span class="an">Youngmin Kim<sup>*</sup></span> · <span class="an">Seonghyun Jin<sup>*</sup></span> · <span class="an">Jong Chul Ye<sup>†</sup></span></p>
+      <p class="authors" id="authors"><span class="an"><a href="https://ggred0123.github.io" target="_blank" rel="noopener">Youngmin Kim</a><sup>*</sup></span> · <span class="an"><a href="https://jinotter3.github.io/" target="_blank" rel="noopener">Seonghyun Jin</a><sup>*</sup></span> · <span class="an"><a href="https://bispl-website.github.io/" target="_blank" rel="noopener">Jong Chul Ye</a><sup>†</sup></span></p>
       <p class="affil">Kim Jaechul Graduate School of Artificial Intelligence, KAIST</p>
       <p class="venue"><sup>*</sup>Equal contribution · <sup>†</sup>Corresponding author</p>
       <div class="cta">
@@ -437,7 +448,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
 
 
   <div class="inst" id="demo" style="margin-top:34px">
-    <div class="inst-bar"><div class="demo-clips" id="demo-clips" role="group" aria-label="Sample"></div></div>
+    <div class="inst-bar"><div class="demo-clips" id="demo-clips" role="group" aria-label="Sample"></div><button class="auto-btn" type="button" id="demo-auto" aria-pressed="true" title="Go to the next view when playback ends"><span class="sw" aria-hidden="true"></span>Auto-advance</button></div>
     <div class="inst-bar views" role="tablist" aria-label="View">
       <button class="view-tab" role="tab" id="tab-player" data-view="player" aria-selected="true" aria-controls="player">Rendered clip</button>
       <button class="view-tab" role="tab" id="tab-xt" data-view="xt" aria-selected="false" aria-controls="xt">One image row over time</button>
