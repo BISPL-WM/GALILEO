@@ -24,7 +24,9 @@
   if (document.fonts) document.fonts.ready.then(redraw);
   const SUB = ['₀', '₁', '₂', '₃'];
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MONO = '"EB Garamond", Garamond, "Times New Roman", serif';
+  const PLAIN = window.GAL_STYLE === 'plain';
+  const SANS = '"Source Sans 3", "Helvetica Neue", Arial, sans-serif';
+  const MONO = PLAIN ? SANS : '"EB Garamond", Garamond, "Times New Roman", serif';
 
   const loadImg = (src) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
   const f32 = (b64) => { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Float32Array(u.buffer); };
@@ -609,11 +611,11 @@
     const LW = 500, LH = 430, STAGE = [0, 5, 10, 15.5], TOTAL = 23, SP = 240;
     const TT = [0, 1 / 3, 2 / 3, 1], TA = 0.5, X = [338, 196], CAM = [250, 398];
     const SV = 0.45, S = [190, 318], SK = 0.4;                       // the ship: velocity (sails right, bow first), waterline, scale
-    const st = GAL.boostStats, scene = shipScene();
+    const st = GAL.boostStats, scene = PLAIN ? plainScene() : shipScene();
     const clamp = (v) => Math.max(0, Math.min(1, v)), ease = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
     const seg = (p, a, b) => ease(clamp((p - a) / (b - a)));
     let t = REDUCED ? STAGE[3] - 0.01 : 0, playing = !REDUCED;
-    const SERIF = '"EB Garamond", Garamond, "Times New Roman", serif', MATH = '"STIX Two Text", "Times New Roman", serif';
+    const SERIF = MONO, MATH = '"STIX Two Text", "Times New Roman", serif';
 
     function prep(cv) {
       const dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth || LW, k = (w / LW) * dpr;
@@ -687,7 +689,7 @@
       // the new frame: moving at -w relative to the shore
       const sa = clamp(f * 4);
       if (sa > 0) {
-        ctx.save(); ctx.globalAlpha = sa; scene.drawShip(ctx, 58, 138, 0.36); ctx.restore();
+        ctx.save(); ctx.globalAlpha = sa; (scene.drawFrame || scene.drawShip)(ctx, 58, 138, 0.36); ctx.restore();
         arrow(ctx, [84, 148], [84 - 14 - 34 * f, 148], { color: C.gilt, w: 1.6, head: 7, alpha: sa });
         text(ctx, 'new frame, moving at −w', 14, 170, { size: 13, color: C.dim, italic: true, alpha: sa });
       }
@@ -735,10 +737,11 @@
         const qa = seg(pg, 0.8, 0.95);
         line(ctx, top, X, { color: C.now, w: 2.2, alpha: qa }); line(ctx, top, skey(S), { color: C.now, w: 2.2, alpha: qa });
       }
-      text(ctx, 'the tower', X[0], X[1] + 47, { size: 13.5, align: 'center', halo: true });
-      ctx.save(); ctx.font = `13.5px ${SERIF}`; const lw = ctx.measureText('the ship, sailing at v').width; ctx.restore();
+      text(ctx, PLAIN ? 'static background' : 'the tower', X[0], X[1] + 47, { size: 13.5, align: 'center', halo: true });
+      const shipLab = PLAIN ? 'moving object, velocity ' : 'the ship, sailing at ';
+      ctx.save(); ctx.font = `13.5px ${SERIF}`; const lw = ctx.measureText(shipLab + 'v').width; ctx.restore();
       ctx.save(); ctx.fillStyle = C.sheet; ctx.globalAlpha = 0.85; ctx.fillRect(S[0] - lw / 2 - 4, S[1] + 15, lw + 8, 18); ctx.restore();
-      mtext(ctx, [['the ship, sailing at ', 'p'], ['v', 'm']], S[0], S[1] + 28, { size: 13.5, align: 'center' });
+      mtext(ctx, [[shipLab, 'p'], ['v', 'm']], S[0], S[1] + 28, { size: 13.5, align: 'center' });
     }
 
     function render() {
@@ -762,6 +765,31 @@
     setPlay(playing); tl.set(t); render();
     whileVisible($('bsx'), (dt) => { if (playing) { t = (t + dt) % TOTAL; tl.set(t); } render(); });
     addEventListener('resize', render);
+  }
+
+  // ================================================================== neutral glyphs for the boost schematic (plain style)
+  function plainScene() {
+    const N = 256, still = document.createElement('canvas'); still.width = still.height = N;
+    const g = still.getContext('2d');
+    g.fillStyle = '#e9ebee'; g.fillRect(0, 0, N, 150); g.fillStyle = '#cfd3d8'; g.fillRect(0, 150, N, N - 150);
+    g.fillStyle = '#9aa1aa'; g.fillRect(170, 70, 16, 80); g.beginPath(); g.moveTo(166, 70); g.lineTo(190, 70); g.lineTo(178, 52); g.closePath(); g.fill();
+    g.strokeStyle = '#7d848d'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(0, 150.5); g.lineTo(N, 150.5); g.stroke();
+    // the moving object: a box on wheels, about as wide as the ship (centre of the box top at the key point)
+    const drawShip = (c, x, y, k) => {
+      c.save(); c.translate(x, y); c.scale(k, k);
+      c.fillStyle = C.base; c.strokeStyle = C.fg; c.lineWidth = 2;
+      c.beginPath(); c.roundRect ? c.roundRect(-42, -58, 84, 50, 8) : c.rect(-42, -58, 84, 50); c.fill(); c.stroke();
+      c.fillStyle = C.fg; for (const wx of [-24, 24]) { c.beginPath(); c.arc(wx, -6, 9, 0, 7); c.fill(); }
+      c.restore();
+    };
+    // the new frame: a pair of axes
+    const drawFrame = (c, x, y, k) => {
+      c.save(); c.translate(x, y); c.strokeStyle = C.fg; c.fillStyle = C.fg; c.lineWidth = 1.6;
+      c.beginPath(); c.moveTo(-14, 6); c.lineTo(22, 6); c.moveTo(-14, 6); c.lineTo(-14, -28); c.stroke();
+      for (const [ax, ay, a] of [[22, 6, 0], [-14, -28, -Math.PI / 2]]) { c.save(); c.translate(ax, ay); c.rotate(a); c.beginPath(); c.moveTo(4, 0); c.lineTo(-4, -4); c.lineTo(-4, 4); c.closePath(); c.fill(); c.restore(); }
+      c.restore(); void k;
+    };
+    return { still, drawShip, drawFrame };
   }
 
   // ================================================================== Galileo's ship, drawn for the method figure
@@ -856,10 +884,10 @@
   // on Galileo's ship (shipScene above), an illustration; the paper's figure shows the same steps on model output.
   function methodAnim() {
     if (!$('mth-a')) return;
-    const M = shipScene();
+    const M = PLAIN && window.GALM ? window.GALM : shipScene();
     const cvs = ['mth-a', 'mth-b', 'mth-c'].map($), caps = [...document.querySelectorAll('#mth .mth-step')];
     const LW = 400, LH = 360, STAGE = [0, 4.6, 9.2, 12.8], TOTAL = 20;
-    const SERIF = '"EB Garamond", Garamond, "Times New Roman", serif', MATH = '"STIX Two Text", "Times New Roman", serif';
+    const SERIF = MONO, MATH = '"STIX Two Text", "Times New Roman", serif';
     const clamp = (v) => Math.max(0, Math.min(1, v));
     const ease = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
     const seg = (p, a, b) => ease(clamp((p - a) / (b - a)));
@@ -1163,9 +1191,10 @@
     $('mth-play').onclick = () => setPlay(!playing);
     caps.forEach((c, k) => { c.onclick = () => { t = STAGE[k]; tl.set(t); setPlay(true); render(); }; });
     setPlay(playing);
-    for (const k of ['lo', 'b', 'hi']) { img['f_' + k] = M.frames[k]; img['c_' + k] = M.cuts[k]; }
-    ready = true; tl.set(t); render();
-    whileVisible($('mth'), (dt) => { if (playing) { t = (t + dt) % TOTAL; tl.set(t); } render(); });
+    const start = () => { ready = true; tl.set(t); render(); whileVisible($('mth'), (dt) => { if (playing) { t = (t + dt) % TOTAL; tl.set(t); } render(); }); };
+    const K3 = ['lo', 'b', 'hi'];
+    if (typeof M.frames.lo === 'string') Promise.all(K3.flatMap((k) => [loadImg(M.frames[k]).then((i) => (img['f_' + k] = i)), loadImg(M.cuts[k]).then((i) => (img['c_' + k] = i))])).then(start);
+    else { for (const k of K3) { img['f_' + k] = M.frames[k]; img['c_' + k] = M.cuts[k]; } start(); }
     addEventListener('resize', render);
   }
 
@@ -1208,7 +1237,7 @@
       vm.onclick = (e) => { if (e.target === vm) close(); };
       addEventListener('keydown', (e) => { if (e.key === 'Escape' && !vm.hidden) close(); });
     }
-    $('copy-bib').onclick = async () => {
+    if ($('copy-bib')) $('copy-bib').onclick = async () => {
       const b = $('copy-bib');
       try { await navigator.clipboard.writeText($('bib').textContent); b.textContent = 'Copied'; }
       catch (e) { const r = document.createRange(); r.selectNodeContents($('bib')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Selected'; }
