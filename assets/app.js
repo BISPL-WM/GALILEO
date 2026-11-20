@@ -189,7 +189,7 @@
     whileVisible($('keys'), (dt, t) => {
       if (!sc || !playing) return;
       const [t0, t3] = [sc.times[0], Math.max(sc.times[3], sc.ta)];
-      tau += dir * dt * (t3 - t0) / 4.5;
+      tau += dir * dt * (t3 - t0) / 1.5;
       if (tau > t3) { tau = t3; dir = -1; } else if (tau < t0) { tau = t0; dir = 1; if (DEMO.onEnd) DEMO.onEnd('keys'); }
       tl.set(tau); render(t);
     });
@@ -443,7 +443,7 @@
     whileVisible($('xt'), (dt) => {
       if (!cur || !playing) return;
       if (Math.abs(pos - t) > 1) pos = t;
-      pos += dt * 3;                                        // 0.1x: three video frames a second
+      pos += dt * 9;                                        // 0.3x: nine video frames a second
       if (pos > cur.n - 1 + 0.5) { pos = 0; if (DEMO.onEnd) DEMO.onEnd('xt'); }
       const nt = snap(pos);
       if (nt !== t) { t = nt; tl.set(t); render(); }

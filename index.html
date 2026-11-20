@@ -460,7 +460,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <div class="tl">
         <button class="icon-btn" id="pl-play" aria-label="Pause">❚❚</button><button class="icon-btn" id="pl-prev" aria-label="Step back">◀</button><button class="icon-btn" id="pl-next" aria-label="Step forward">▶</button>
         <div class="tl-track" id="pl-track" role="slider" aria-label="Frame" tabindex="0"></div>
-        <select id="pl-speed" aria-label="Playback speed"><option value="3" selected>0.1×</option><option value="6">0.2×</option><option value="15">0.5×</option><option value="30">1×</option></select>
+        <select id="pl-speed" aria-label="Playback speed"><option value="3">0.1×</option><option value="6">0.2×</option><option value="9" selected>0.3×</option><option value="15">0.5×</option><option value="30">1×</option></select>
       </div>
       <canvas id="psnr" style="cursor:pointer;touch-action:none" width="1100" height="150" aria-label="PSNR on the moving region per frame"></canvas>
       <div class="view-ctrl"><div class="chip-group"><span>Show</span><div class="chips" role="group" aria-label="Display"><button class="chip" data-mode="image" aria-pressed="true">Rendering</button><button class="chip" data-mode="error" aria-pressed="false">Error vs. ground truth ×4</button></div></div><div class="chip-group" style="margin-left:auto"><span>Zoom</span><div class="chips"><button class="chip" id="pl-zout" aria-label="Zoom out">−</button><button class="chip" id="pl-zin" aria-label="Zoom in">+</button><button class="chip" id="pl-zreset">Moving region</button></div></div></div>
