@@ -189,7 +189,7 @@
     whileVisible($('keys'), (dt, t) => {
       if (!sc || !playing) return;
       const [t0, t3] = [sc.times[0], Math.max(sc.times[3], sc.ta)];
-      tau += dir * dt * (t3 - t0) / 1.5;
+      tau += dir * dt * (t3 - t0) / 3;                  // t0 to t3 in 3 s, and back
       if (tau > t3) { tau = t3; dir = -1; } else if (tau < t0) { tau = t0; dir = 1; if (DEMO.onEnd) DEMO.onEnd('keys'); }
       tl.set(tau); render(t);
     });
@@ -401,7 +401,7 @@
     }
     // auto-advance: a view stays at least DWELL seconds on screen, then moves on when its playback next wraps, and only
     // once the next view's images are in; after the last view, the next sample
-    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 6;
+    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 3;
     let auto = !REDUCED;
     const setAuto = (on) => { auto = on; if (ab) ab.setAttribute('aria-pressed', on); };
     if (ab) ab.onclick = () => setAuto(!auto);
@@ -481,7 +481,7 @@
     whileVisible($('xt'), (dt) => {
       if (!cur || !playing) return;
       if (Math.abs(pos - t) > 1) pos = t;
-      pos += dt * 9;                                        // 0.3x: nine video frames a second
+      pos += dt * 4.5;                                      // 0.15x: 4.5 video frames a second
       if (pos > cur.n - 1 + 0.5) { pos = 0; if (DEMO.onEnd) DEMO.onEnd('xt'); }
       const nt = snap(pos);
       if (nt !== t) { t = nt; tl.set(t); render(); }
