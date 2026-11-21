@@ -275,7 +275,7 @@
       ctx.textAlign = 'left'; ctx.font = `600 14.5px ${MONO}`;
       for (const [tx, col, y] of labs) { ctx.fillStyle = col; ctx.fillText(tx, w - Rr + 10, y); }
       ctx.strokeStyle = C.fg; ctx.globalAlpha = 0.5; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(t), T); ctx.lineTo(X(t), h - Bm); ctx.stroke(); ctx.globalAlpha = 1;
-      if (pb[f] != null && pg[f] != null) { ctx.fillStyle = C.fg; ctx.textAlign = X(f) > w - Rr - 90 ? 'right' : 'left'; ctx.font = `600 14.5px ${MONO}`; ctx.fillText(`+${(pg[f] - pb[f]).toFixed(1)} dB`, X(f) + (ctx.textAlign === 'right' ? -8 : 8), (Y(pb[f]) + Y(pg[f])) / 2); }
+      if (pb[f] != null && pg[f] != null) { ctx.fillStyle = C.fg; ctx.textAlign = X(f) > w - Rr - 90 ? 'right' : 'left'; ctx.font = `600 14.5px ${MONO}`; ctx.fillText(`${((d) => (d < 0 ? '−' : '+') + Math.abs(d).toFixed(1))(Math.round((pg[f] - pb[f]) * 10) / 10)} dB`, X(f) + (ctx.textAlign === 'right' ? -8 : 8), (Y(pb[f]) + Y(pg[f])) / 2); }
     }
 
     function render() {
