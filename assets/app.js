@@ -193,17 +193,17 @@
       if (tau > t3) { tau = t3; dir = -1; } else if (tau < t0) { tau = t0; dir = 1; if (DEMO.onEnd) DEMO.onEnd('keys'); }
       tl.set(tau); render(t);
     });
-    return { load: (id) => { const s = GAL.keys.find((k) => k.id === id); if (s) load(s); },
+    return { load: (id) => { const s = GAL.keys.find((k) => k.id === id); return s ? load(s) : Promise.resolve(); },
       restart: () => { if (sc) { tau = sc.times[0]; dir = 1; if (tl) tl.set(tau); } setPlay(true); } };
   }
 
   // ================================================================== 2. rendered clips
   // dense-in-time renders: a grid sheet of clip.dense.n frames (sub per video frame), RayRoPE ('b') and GALILEO ('g')
   const DKEY = { RayRoPE: 'b', GALILEO: 'g' };
-  const denseCache = {};
+  const denseCache = {}, denseDone = {};
   function loadDense(c) {
     if (!c.dense) return Promise.resolve(null);
-    if (!denseCache[c.id]) denseCache[c.id] = Promise.all([loadImg(c.dense.b), loadImg(c.dense.g)]).then(([b, g]) => ({ b, g })).catch(() => null);
+    if (!denseCache[c.id]) denseCache[c.id] = Promise.all([loadImg(c.dense.b), loadImg(c.dense.g)]).then(([b, g]) => { denseDone[c.id] = true; return { b, g }; }).catch(() => null);
     return denseCache[c.id];
   }
   // source rectangle origin of `method` at time t (in video frames): the dense sheet when it has one, else the 30 fps sheet
@@ -292,15 +292,15 @@
     function zoomBy(k) { const s = Math.max(48, Math.min(256, zoom[2] * k)); setZoom([zoom[0] + (zoom[2] - s) / 2, zoom[1] + (zoom[2] - s) / 2, s]); }
 
     async function load(c) {
-      const my = ++token, im = await loadImg(c.src);
+      const my = ++token, [im, d] = await Promise.all([loadImg(c.src), denseDone[c.id] ? loadDense(c) : null]);
       if (my !== token) return;
-      clip = c; sheet = im; dense = null; t = Math.min(t, c.n - 1); zoom = c.zoom.slice();
+      clip = c; sheet = im; dense = d || null; t = Math.min(t, c.n - 1); zoom = c.zoom.slice();
       const sel = $('pl-base'), opts = Object.keys(NAME).filter((m) => c.methods.includes(m));
       if (!opts.includes(base)) base = 'RayRoPE';
       sel.innerHTML = opts.map((m) => `<option value="${m}"${m === base ? ' selected' : ''}>${NAME[m]}</option>`).join('');
       tl = timeline($('pl-track'), { min: 0, max: c.n - 1, onInput: (v) => { t = snap(v); tl.set(t); setPlay(false); render(); }, ticks: c.inputs.map((v, i) => ({ v, color: C.t[i], label: 't' + SUB[i] })) });
       t = snap(t); tl.set(t); render();
-      loadDense(c).then((d) => { if (my === token && d) { dense = d; render(); } });
+      if (!dense) loadDense(c).then((d) => { if (my === token && d) { dense = d; render(); } });
     }
     function setPlay(p) { playing = p; $('pl-play').textContent = p ? '❚❚' : '▶'; $('pl-play').setAttribute('aria-label', p ? 'Pause' : 'Play'); }
     $('pl-play').onclick = () => setPlay(!playing);
@@ -338,7 +338,7 @@
     });
     addEventListener('resize', () => clip && chart());
 
-    return { load: (id) => { const c = GAL.clips.find((x) => x.id === id); if (c) load(c); },
+    return { load: (id) => { const c = GAL.clips.find((x) => x.id === id); return c ? load(c) : Promise.resolve(); },
       restart: () => { t = 0; pos = 0; if (tl) tl.set(0); setPlay(true); if (clip) render(); } };
   }
 
@@ -349,12 +349,49 @@
     const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'];
     const list = ids.map((id) => GAL.clips.find((c) => c.id === id)).filter((c) => c && GAL.keys.some((k) => k.id === c.id));
     let view = 'player', clip = list[0].id;
-    const loaded = {}, btns = [];
+    const loaded = {}, btns = [], panes = Object.keys(VIEWS).map((v) => $(v));
+    const nextClip = () => list[(list.findIndex((c) => c.id === clip) + 1) % list.length].id;
+    // every image a sample needs (clip sheet, dense sheets, the key view's pictures), fetched ahead of its turn
+    const ready = {}, isReady = {};
+    function prep(id) {
+      if (!ready[id]) {
+        const c = GAL.clips.find((x) => x.id === id), k = GAL.keys.find((x) => x.id === id);
+        const urls = [c && c.src, k && k.atlas, k && k.gt, k && k.rg, k && k.rb].filter(Boolean);
+        const done = () => { isReady[id] = true; };
+        ready[id] = Promise.all([...urls.map(loadImg), c ? loadDense(c) : null]).then(done, done);
+      }
+      return ready[id];
+    }
+    // every view as tall as the tallest one, so the page below stays put when the view changes
+    let measuredAt = 0;
+    function steady(force) {
+      if (!force && innerWidth === measuredAt) return;
+      measuredAt = innerWidth;
+      const hid = panes.map((el) => el.hidden);
+      panes.forEach((el) => { el.style.minHeight = ''; });
+      let h = 0;
+      for (const el of panes) { panes.forEach((x) => { x.hidden = x !== el; }); h = Math.max(h, el.offsetHeight); }
+      panes.forEach((el, i) => { el.hidden = hid[i]; el.style.minHeight = h + 'px'; });
+    }
+    addEventListener('resize', () => steady());
+    // a view fades in once its sample is drawn: never the previous sample, an empty canvas or a half-loaded clip
+    let shown = 0, stok = 0;
     function show() {
+      const my = ++stok;
       for (const v of Object.keys(VIEWS)) { $(v).hidden = v !== view; $('tab-' + v).setAttribute('aria-selected', v === view); }
       btns.forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === clip));
-      if (VIEWS[view] && loaded[view] !== clip) { VIEWS[view].load(clip); loaded[view] = clip; }
+      const body = $(view).querySelector('.inst-body');
+      if (body) { body.classList.add('enter'); void body.offsetWidth; }
+      let p = Promise.resolve();
+      if (VIEWS[view] && loaded[view] !== clip) { p = VIEWS[view].load(clip) || p; loaded[view] = clip; }
       dispatchEvent(new Event('resize'));                   // charts in a pane that was hidden take their width again
+      shown = 0; prep(clip); prep(nextClip());
+      return p.then(() => {
+        if (my !== stok) return false;
+        steady(true);
+        if (body) requestAnimationFrame(() => body.classList.remove('enter'));
+        return true;
+      });
     }
     const host = $('demo-clips');                            // one row, no grouping by dataset
     for (const c of list) {
@@ -362,19 +399,20 @@
       b.title = c.dataset === 'Stereo4D' ? 'Stereo4D, real video' : c.dataset;
       b.onclick = () => { clip = c.id; show(); }; host.appendChild(b); btns.push(b);
     }
-    // auto-advance: when a view's playback wraps, show the next view; after the last one, the next sample
-    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto');
+    // auto-advance: a view stays at least DWELL seconds on screen, then moves on when its playback next wraps, and only
+    // once the next view's images are in; after the last view, the next sample
+    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 12;
     let auto = !REDUCED;
     const setAuto = (on) => { auto = on; if (ab) ab.setAttribute('aria-pressed', on); };
     if (ab) ab.onclick = () => setAuto(!auto);
     setAuto(auto);
+    whileVisible($('demo'), (dt) => { shown += dt; });
     DEMO.onEnd = (v) => {
-      if (!auto || v !== view) return;
-      const i = ORDER.indexOf(view);
-      if (i < ORDER.length - 1) view = ORDER[i + 1];
-      else { view = ORDER[0]; clip = list[(list.findIndex((c) => c.id === clip) + 1) % list.length].id; }
-      show();
-      if (VIEWS[view] && VIEWS[view].restart) VIEWS[view].restart();
+      if (!auto || v !== view || shown < DWELL) return;
+      const last = ORDER.indexOf(view) === ORDER.length - 1, nc = nextClip();
+      if (!isReady[last ? nc : clip]) return;               // still loading: one more loop
+      if (last) { view = ORDER[0]; clip = nc; } else view = ORDER[ORDER.indexOf(view) + 1];
+      show().then((cur) => { if (cur && VIEWS[view] && VIEWS[view].restart) VIEWS[view].restart(); });
     };
     document.querySelectorAll('#demo .view-tab').forEach((t) => {
       t.onclick = () => { view = t.dataset.view; show(); };
@@ -422,12 +460,12 @@
     }
     function setPlay(p) { playing = p; $('xt-play').textContent = p ? '❚❚' : '▶'; $('xt-play').setAttribute('aria-label', p ? 'Pause' : 'Play'); }
     async function load(c) {
-      const my = ++token, im = await loadImg(c.src);
+      const my = ++token, [im, d] = await Promise.all([loadImg(c.src), denseDone[c.id] ? loadDense(c) : null]);
       if (my !== token) return;
-      cur = c; sheet = im; dense = null; row = Math.round(c.zoom[1] + c.zoom[2] * 0.55); t = pos = 0;
+      cur = c; sheet = im; dense = d || null; row = Math.round(c.zoom[1] + c.zoom[2] * 0.55); t = pos = 0;
       tl = timeline($('xt-track'), { min: 0, max: c.n - 1, onInput: (v) => { t = snap(v); tl.set(t); setPlay(false); render(); }, ticks: c.inputs.map((v, i) => ({ v, color: C.t[i], label: 't' + SUB[i] })) });
       reslice(); render();
-      loadDense(c).then((d) => { if (my === token && d) { dense = d; reslice(); render(); } });
+      if (!dense) loadDense(c).then((d) => { if (my === token && d) { dense = d; reslice(); render(); } });
     }
     $('xt-play').onclick = () => setPlay(!playing);
     document.querySelectorAll('#xt [data-fps]').forEach((b) => { b.onclick = () => { fps = +b.dataset.fps; document.querySelectorAll('#xt [data-fps]').forEach((x) => x.setAttribute('aria-pressed', x === b)); if (cur) { t = snap(t); reslice(); render(); } }; });
@@ -448,7 +486,7 @@
       const nt = snap(pos);
       if (nt !== t) { t = nt; tl.set(t); render(); }
     });
-    return { load: (id) => { const c = items.find((x) => x.id === id); if (c) load(c); },
+    return { load: (id) => { const c = items.find((x) => x.id === id); return c ? load(c) : Promise.resolve(); },
       restart: () => { t = pos = 0; if (tl) tl.set(0); setPlay(true); if (cur) render(); } };
   }
 
