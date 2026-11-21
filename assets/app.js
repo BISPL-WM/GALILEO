@@ -401,7 +401,7 @@
     }
     // auto-advance: a view stays at least DWELL seconds on screen, then moves on when its playback next wraps, and only
     // once the next view's images are in; after the last view, the next sample
-    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 12;
+    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 6;
     let auto = !REDUCED;
     const setAuto = (on) => { auto = on; if (ab) ab.setAttribute('aria-pressed', on); };
     if (ab) ab.onclick = () => setAuto(!auto);
