@@ -8,6 +8,7 @@
     paper: 'assets/galileo_paper.pdf',
     arxiv: null,                           // 'https://arxiv.org/abs/....'
     code: 'https://github.com/BISPL-WM/GALILEO-code',
+    models: 'https://huggingface.co/ggred0123/GALILEO',   // the released checkpoints
   };
 
   const GAL = window.GAL;
@@ -1494,7 +1495,7 @@
   function boot() {
     $('authors').innerHTML = SITE.authors;
     const link = (id, url, label) => { const a = $(id); if (url) { a.href = url; a.removeAttribute('aria-disabled'); if (label) (a.querySelector('span') || a).textContent = label; } };
-    link('link-paper', SITE.paper); link('link-arxiv', SITE.arxiv, 'arXiv'); link('link-code', SITE.code, 'Code');
+    link('link-paper', SITE.paper); link('link-arxiv', SITE.arxiv, 'arXiv'); link('link-code', SITE.code, 'Code'); link('link-models', SITE.models, 'Checkpoints');
     for (const k of ['method', 'tracks', 'driving']) { const el = $('fig-' + k); if (el) el.src = GAL.figs[k]; }
     // overview video: a button opens it over the page; closing pauses it
     const vm = $('vmodal'), vid = $('intro-video');
