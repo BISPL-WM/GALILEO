@@ -218,6 +218,7 @@
     const NAME = { RayRoPE: 'RayRoPE', URoPE: 'URoPE', GTA: 'GTA', PRoPE: 'PRoPE', Plucker: 'Plücker' };
     const cvs = { gt: $('pl-gt'), b: $('pl-b'), g: $('pl-g') };
     const off = document.createElement('canvas'); off.width = off.height = 512;
+    const heat = document.createElement('canvas'); heat.width = heat.height = 512;
     let clip = null, sheet = null, dense = null, t = 0, playing = !REDUCED, base = 'RayRoPE', outline = true, tl = null, token = 0;
     let zoom = [0, 0, 256], mode = 'image', hold = null;
     const ours = () => (base === 'URoPE' ? 'URoPE_G' : 'GALILEO');
@@ -234,7 +235,12 @@
         const o = off.getContext('2d'); o.globalCompositeOperation = 'source-over'; o.drawImage(...src('GT'), 0, 0, 512, 512);
         o.globalCompositeOperation = 'difference'; o.drawImage(...src(method), 0, 0, 512, 512);
         o.globalCompositeOperation = 'lighter'; o.drawImage(off, 0, 0); o.drawImage(off, 0, 0);
-        ctx.drawImage(off, 0, 0, W, W);
+        const hc = heat.getContext('2d'); hc.globalCompositeOperation = 'source-over'; hc.fillStyle = '#fff'; hc.fillRect(0, 0, 512, 512);
+        hc.globalCompositeOperation = 'luminosity'; hc.drawImage(off, 0, 0);          // the error's brightness alone
+        hc.globalCompositeOperation = 'multiply'; hc.fillStyle = '#ff7a2e'; hc.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, W); ctx.globalCompositeOperation = 'luminosity'; ctx.drawImage(...src(method), 0, 0, W, W);
+        ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(16,13,9,.66)'; ctx.fillRect(0, 0, W, W);
+        ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(heat, 0, 0, W, W); ctx.drawImage(heat, 0, 0, W, W); ctx.globalCompositeOperation = 'source-over';
       } else ctx.drawImage(...src(flipped ? 'GT' : method), 0, 0, W, W);
       if (outline) {
         const k = 256 / zoom[2];
@@ -347,7 +353,7 @@
   function demo(api) {
     const VIEWS = { player: api.player, xt: api.spacetime, keys: api.keysDemo };
     if (api.cube) VIEWS.cube = api.cube;
-    const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'];
+    const ids = ['singer', 'train', 'car', 'float', 'fish', 'soviet', 'walker'];
     const list = ids.map((id) => GAL.clips.find((c) => c.id === id)).filter((c) => c && GAL.keys.some((k) => k.id === c.id));
     let view = 'player', clip = list[0].id;
     const loaded = {}, btns = [], panes = Object.keys(VIEWS).map((v) => $(v));
@@ -518,7 +524,7 @@
     function cell(key, k) {
       const { cv, sh } = cells[key + k], ctx = cv.getContext('2d'), W = cv.width, v = cur.views[k], [cx, cy, cs] = crop, S = W / cs;
       ctx.imageSmoothingEnabled = true; ctx.filter = 'grayscale(1)'; ctx.drawImage(atlas, k * 256 + cx, cy, cs, cs, 0, 0, W, W); ctx.filter = 'none';
-      ctx.fillStyle = 'rgba(13,12,21,.55)'; ctx.fillRect(0, 0, W, W);
+      ctx.fillStyle = 'rgba(13,12,21,.4)'; ctx.fillRect(0, 0, W, W);
       const m = u8(layer < 0 ? v[key] : v[key + 'L'][layer]), id = heatCv.getContext('2d').createImageData(32, 32);
       let peak = 1, arg = 0; for (let i = 0; i < 1024; i++) if (m[i] > peak) { peak = m[i]; arg = i; }
       for (let i = 0; i < 1024; i++) id.data.set(ramp(m[i] / peak), i * 4);
@@ -527,12 +533,12 @@
       const ax = ((arg % 32) * 8 - cx) * S, ay = (Math.floor(arg / 32) * 8 - cy) * S;
       ctx.lineWidth = 3; ctx.strokeStyle = key === 'g' ? C.now : C.base; ctx.strokeRect(ax + 1.5, ay + 1.5, 8 * S - 3, 8 * S - 3);
       if (v.ok) {
-        const r = Math.max(3.2, 4.2) * S;
-        const ring = (p, col, dash) => { ctx.save(); ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.beginPath(); ctx.arc((p[0] - cx) * S, (p[1] - cy) * S, r, 0, 7); ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = col; if (dash) ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.arc((p[0] - cx) * S, (p[1] - cy) * S, r, 0, 7); ctx.stroke(); ctx.restore(); };
+        const r = 7 * S;
+        const ring = (p, col, dash) => { ctx.save(); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.arc((p[0] - cx) * S, (p[1] - cy) * S, r, 0, 7); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = col; if (dash) ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.arc((p[0] - cx) * S, (p[1] - cy) * S, r, 0, 7); ctx.stroke(); ctx.restore(); };
         ring(v.ps, '#fff', true); ring(v.pt, C.now, false);
       }
       const c = layer < 0 ? v[key + 'c'] : (v[key + 'Lc'] || [])[layer], s = layer < 0 ? v[key + 's'] : (v[key + 'Ls'] || [])[layer];
-      sh.innerHTML = c == null ? 'places &lt; 10 px apart' : `content <b${c > s ? ' class="g"' : ''}>${(c * 100).toFixed(0)}%</b> · static <b${s >= c ? ' style="color:var(--fg)"' : ''}>${(s * 100).toFixed(0)}%</b>`;
+      sh.innerHTML = c == null ? 'places &lt; 10 px apart' : `<span class="tug"><i style="width:${(c * 100).toFixed(1)}%"></i><u style="width:${(s * 100).toFixed(1)}%"></u></span>content <b${c > s ? ' class="g"' : ''}>${(c * 100).toFixed(0)}%</b> · static <b${s >= c ? ' style="color:var(--fg)"' : ''}>${(s * 100).toFixed(0)}%</b>`;
       return arg;
     }
     function render() {
@@ -1485,6 +1491,35 @@
     return {};
   }
 
+  const WALL = {"src": "assets/wall/wall.webp", "hs": 176, "items": [{"id": "singer", "label": "Singer", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "train", "label": "Train", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "car", "label": "Car", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "float", "label": "Parade float", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "fish", "label": "Fish", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "soviet", "label": "Courtyard", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "traveler", "label": "Traveler", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "desert", "label": "Desert", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "winter", "label": "Winter scene", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "walker", "label": "Walking figure", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "box", "label": "Box", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "dolphin", "label": "Dolphin", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "robot", "label": "Robot", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "tractor", "label": "Tractor", "inputs": [0.0, 0.3, 0.6, 0.9]}]};
+  // ================================================================== one image row over time, for every sample at once
+  // (the strips are cut ahead of time by src/build_wall.py into one sheet: a column per sample, RayRoPE / GALILEO / truth)
+  function wall() {
+    const host = $('wl');
+    if (!host) return null;
+    loadImg(WALL.src).then((im) => {
+      const PER = 7, HS = WALL.hs;
+      for (let b = 0; b < WALL.items.length; b += PER) {
+        const grp = WALL.items.slice(b, b + PER), g = document.createElement('div');
+        g.className = 'wall-grid'; g.style.setProperty('--n', grp.length);
+        g.innerHTML = '<div class="wt">time ↑</div>' + grp.map((it) => `<div class="wh">${it.label}</div>`).join('');
+        [['RayRoPE', 'b'], ['+ GALILEO', 'g'], ['Ground truth', '']].forEach(([name, cls], r) => {
+          const h = document.createElement('div'); h.className = 'wr ' + cls; h.textContent = name; g.appendChild(h);
+          grp.forEach((it, j) => {
+            const cv = document.createElement('canvas'); cv.width = 256; cv.height = HS;
+            const x = cv.getContext('2d'); x.imageSmoothingEnabled = false;
+            x.drawImage(im, (b + j) * 256, r * HS, 256, HS, 0, 0, 256, HS);
+            it.inputs.forEach((fr, k) => { const y = Math.round((1 - fr) * (HS - 1)); x.fillStyle = C.t[k]; x.globalAlpha = 0.45; x.fillRect(0, y, 256, 1); x.globalAlpha = 1; x.fillRect(0, y - 2, 16, 5); });
+            cv.setAttribute('aria-label', `${name}, ${it.label}: one image row over time`);
+            g.appendChild(cv);
+          });
+        });
+        host.appendChild(g);
+      }
+    });
+    return {};
+  }
+
   function boot() {
     $('authors').innerHTML = SITE.authors;
     const link = (id, url, label) => { const a = $(id); if (url) { a.href = url; a.removeAttribute('aria-disabled'); if (label) (a.querySelector('span') || a).textContent = label; } };
@@ -1507,7 +1542,7 @@
       setTimeout(() => (b.textContent = 'Copy'), 1600);
     };
     const api = {};
-    for (const fn of [tables, jovilog, keysDemo, player, spacetime, cube, methodAnim, attention, boostAnim, boost, wind, pad]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
+    for (const fn of [tables, jovilog, keysDemo, player, spacetime, cube, methodAnim, attention, boostAnim, boost, wind, pad, wall]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
     try { demo(api); } catch (e) { console.error('demo', e); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
