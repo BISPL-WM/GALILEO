@@ -1286,7 +1286,7 @@
   function cube() {
     if (!$('cube')) return null;
     const cvs = { b: $('cb-b'), g: $('cb-g'), gt: $('cb-gt') };
-    let clip = null, D = null, yaw = -0.62, pitch = 0.55, token = 0, tau = 0, hold = 0, playing = !REDUCED;
+    let clip = null, D = null, yaw = -0.62, pitch = 0.55, token = 0, tau = 0, hold = 0, playing = !REDUCED, turned = false, sway = 0;
     function build(c, sheet, db, dg) {
       const z = c.zoom, zs = Math.min(256, Math.round(z[2] * 1.2));
       const zx = Math.max(0, Math.min(256 - zs, Math.round(z[0] + z[2] / 2 - zs / 2))), zy = Math.max(0, Math.min(256 - zs, Math.round(z[1] + z[2] / 2 - zs / 2)));
@@ -1339,16 +1339,19 @@
     for (const cv of Object.values(cvs)) {
       let last = null;
       cv.onpointerdown = (e) => { last = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); };
-      cv.onpointermove = (e) => { if (!last) return; yaw = Math.max(-1.35, Math.min(1.35, yaw + (e.clientX - last[0]) * 0.008)); pitch = Math.max(0.05, Math.min(1.2, pitch + (e.clientY - last[1]) * 0.006)); last = [e.clientX, e.clientY]; drawAll(); };
+      cv.onpointermove = (e) => { if (!last) return; if (!turned) { turned = true; $('cb-hint').hidden = true; } yaw = Math.max(-1.35, Math.min(1.35, yaw + (e.clientX - last[0]) * 0.008)); pitch = Math.max(0.05, Math.min(1.2, pitch + (e.clientY - last[1]) * 0.006)); last = [e.clientX, e.clientY]; drawAll(); };
       cv.onpointerup = cv.onpointercancel = () => { last = null; };
     }
     const setPlay = (p) => { playing = p; $('cb-play').textContent = p ? '❚❚' : '▶'; $('cb-play').setAttribute('aria-label', p ? 'Pause' : 'Play'); };
     $('cb-play').onclick = () => setPlay(!playing);
-    $('cb-reset').onclick = () => { yaw = -0.62; pitch = 0.55; drawAll(); };
+    $('cb-reset').onclick = () => { yaw = -0.62; pitch = 0.55; turned = false; sway = 0; drawAll(); };
     whileVisible($('cube'), (dt) => {
-      if (!D || !playing) return;
-      if (tau >= clip.n - 1) { hold += dt; if (hold > 1.5) { tau = 0; hold = 0; if (DEMO.onEnd) DEMO.onEnd('cube'); } }
-      else tau = Math.min(clip.n - 1, tau + dt * 4.5);          // 0.15x, as the space-time view
+      if (!D) return;
+      if (!turned && !REDUCED) { sway += dt; yaw = -0.62 + 0.2 * Math.sin(sway * 0.7); }   // a slow sway says the block can be turned
+      if (playing) {
+        if (tau >= clip.n - 1) { hold += dt; if (hold > 1.5) { tau = 0; hold = 0; if (DEMO.onEnd) DEMO.onEnd('cube'); } }
+        else tau = Math.min(clip.n - 1, tau + dt * 4.5);        // 0.15x, as the space-time view
+      }
       drawAll();
     });
     addEventListener('resize', () => D && drawAll());
