@@ -346,6 +346,7 @@
   // the samples of the space-time slices; each view loads the chosen sample when it is first shown
   function demo(api) {
     const VIEWS = { player: api.player, xt: api.spacetime, keys: api.keysDemo };
+    if (api.cube) VIEWS.cube = api.cube;
     const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'];
     const list = ids.map((id) => GAL.clips.find((c) => c.id === id)).filter((c) => c && GAL.keys.some((k) => k.id === c.id));
     let view = 'player', clip = list[0].id;
@@ -401,7 +402,7 @@
     }
     // auto-advance: a view stays at least DWELL seconds on screen, then moves on when its playback next wraps, and only
     // once the next view's images are in; after the last view, the next sample
-    const ORDER = ['player', 'xt', 'keys'], ab = $('demo-auto'), DWELL = 3;
+    const ORDER = ['player', 'xt', 'keys'].concat(api.cube ? ['cube'] : []), ab = $('demo-auto'), DWELL = 3;
     let auto = !REDUCED;
     const setAuto = (on) => { auto = on; if (ab) ab.setAttribute('aria-pressed', on); };
     if (ab) ab.onclick = () => setAuto(!auto);
@@ -1278,6 +1279,209 @@
   }
 
   // ================================================================== boot
+  // ================================================================== space-time cube (a fourth view of the merged figure)
+  // The moving region stacked over time: the front face is the present, the top and the side faces are one image row
+  // and one column through every earlier time, so the block grows back into the page as the clip plays. The slices are
+  // copied canvas to canvas from the sheets, one row or column at a time.
+  function cube() {
+    if (!$('cube')) return null;
+    const cvs = { b: $('cb-b'), g: $('cb-g'), gt: $('cb-gt') };
+    let clip = null, D = null, yaw = -0.62, pitch = 0.55, token = 0, tau = 0, hold = 0, playing = !REDUCED;
+    function build(c, sheet, db, dg) {
+      const z = c.zoom, zs = Math.min(256, Math.round(z[2] * 1.2));
+      const zx = Math.max(0, Math.min(256 - zs, Math.round(z[0] + z[2] / 2 - zs / 2))), zy = Math.max(0, Math.min(256 - zs, Math.round(z[1] + z[2] / 2 - zs / 2)));
+      const row = Math.min(zy + zs - 1, Math.max(zy, Math.round(z[1] + z[2] * 0.55))), col = Math.round(zx + zs / 2);
+      const mk = (w, h) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; return [cv, x]; };
+      const s = {};
+      for (const m of ['b', 'g', 'gt']) {
+        const NT = m === 'gt' ? c.n : c.dense.n;
+        const tile = (i) => (m === 'gt' ? [sheet, i * 256, c.methods.indexOf('GT') * 256] : [m === 'b' ? db : dg, (i % c.dense.cols) * 256, Math.floor(i / c.dense.cols) * 256]);
+        const [xt, a] = mk(zs, NT), [yt, b] = mk(NT, zs);
+        for (let v = 0; v < NT; v++) { const [im, tx, ty] = tile(v); a.drawImage(im, tx + zx, ty + row, zs, 1, 0, v, zs, 1); b.drawImage(im, tx + col, ty + zy, 1, zs, v, 0, 1, zs); }
+        s[m] = { xt, yt, NT, per: m === 'gt' ? 1 : c.dense.sub, tile };
+      }
+      D = { zx, zy, zs, row, col, s };
+    }
+    async function load(c) {
+      const my = ++token, [sheet, db, dg] = await Promise.all([loadImg(c.src), loadImg(c.dense.b), loadImg(c.dense.g)]);
+      if (my !== token) return;
+      clip = c; build(c, sheet, db, dg); tau = REDUCED ? c.n - 1 : 0; hold = 0; drawAll();
+    }
+    function draw(m) {
+      const cv = cvs[m], ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, W, H);
+      if (!D) return;
+      const { zx, zy, zs } = D, s = D.s[m], n = clip.n, DZ = 1.45 * zs, kz = DZ / (n - 1), k = Math.min(s.NT - 1, Math.floor(tau * s.per + 1e-6));
+      const ct = Math.cos(yaw), st = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), cx = W * 0.5, cy = H * 0.5;
+      // one scale for every angle: the whole clip's block at the starting view fills the canvas
+      const c0 = Math.cos(-0.62), s0 = Math.sin(0.62), p0 = Math.cos(0.55), q0 = Math.sin(0.55);
+      const sc = Math.min((W * 0.9) / (zs * c0 + DZ * s0), (H * 0.9) / (zs * p0 + (zs * s0 + DZ * c0) * q0));
+      const f = tau * s.per - k;                            // the share of the newest row that has happened
+      // world: x right, y down, z = how long ago, so z = 0 is the present; the view is centred on the whole clip's block
+      const P = (x, y, zz) => { const X = x - zs / 2, Y = y - zs / 2, Z = zz - DZ / 2, X1 = X * ct + Z * st, Z1 = -X * st + Z * ct; return [cx + sc * X1, cy + sc * (Y * cp - Z1 * sp)]; };
+      const quad = (o, eu, ev) => ctx.setTransform(eu[0] - o[0], eu[1] - o[1], ev[0] - o[0], ev[1] - o[1], o[0], o[1]);
+      const ago = (t) => (tau - t) * kz, Z = ago(0), xs = st * cp > 0 ? zs : 0;
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      if (sp > 0) { const o = P(0, 0, ago(0)); quad(o, P(1, 0, ago(0)), P(0, 0, ago(1 / s.per))); ctx.drawImage(s.xt, 0, 0, zs, k, 0, 0, zs, k); if (f > 0.01) ctx.drawImage(s.xt, 0, k, zs, 1, 0, k, zs, f); }
+      { const o = P(xs, 0, ago(0)); quad(o, P(xs, 0, ago(1 / s.per)), P(xs, 1, ago(0))); ctx.drawImage(s.yt, 0, 0, k, zs, 0, 0, k, zs); if (f > 0.01) ctx.drawImage(s.yt, k, 0, 1, zs, k, 0, f, zs); }
+      { const [im, tx, ty] = s.tile(m === 'gt' ? Math.round(tau) : Math.min(s.NT - 1, Math.round(tau * s.per))), o = P(0, 0, 0); quad(o, P(1, 0, 0), P(0, 1, 0)); ctx.drawImage(im, tx + zx, ty + zy, zs, zs, 0, 0, zs, zs); }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const seg = (a, b, col, w, dash) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]); };
+      seg(P(0, D.row - zy, 0), P(zs, D.row - zy, 0), 'rgba(255,255,255,.85)', 1.2, [5, 4]);
+      seg(P(D.col - zx, 0, 0), P(D.col - zx, zs, 0), 'rgba(255,255,255,.85)', 1.2, [5, 4]);
+      clip.inputs.forEach((fi, j) => { if (fi > tau + 1e-6) return; seg(P(0, 0, ago(fi)), P(zs, 0, ago(fi)), C.t[j], 2.4); seg(P(xs, 0, ago(fi)), P(xs, zs, ago(fi)), C.t[j], 2.4); });
+      ctx.globalAlpha = 0.6; const E = (a, b) => seg(P(...a), P(...b), C.fg, 1);
+      E([0, 0, 0], [zs, 0, 0]); E([zs, 0, 0], [zs, zs, 0]); E([zs, zs, 0], [0, zs, 0]); E([0, zs, 0], [0, 0, 0]);
+      E([0, 0, 0], [0, 0, Z]); E([zs, 0, 0], [zs, 0, Z]); E([xs, zs, 0], [xs, zs, Z]); E([0, 0, Z], [zs, 0, Z]); E([xs, 0, Z], [xs, zs, Z]);
+      ctx.globalAlpha = 1;
+    }
+    const drawAll = () => { draw('b'); draw('g'); draw('gt'); };
+    for (const cv of Object.values(cvs)) {
+      let last = null;
+      cv.onpointerdown = (e) => { last = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); };
+      cv.onpointermove = (e) => { if (!last) return; yaw = Math.max(-1.35, Math.min(1.35, yaw + (e.clientX - last[0]) * 0.008)); pitch = Math.max(0.05, Math.min(1.2, pitch + (e.clientY - last[1]) * 0.006)); last = [e.clientX, e.clientY]; drawAll(); };
+      cv.onpointerup = cv.onpointercancel = () => { last = null; };
+    }
+    const setPlay = (p) => { playing = p; $('cb-play').textContent = p ? '❚❚' : '▶'; $('cb-play').setAttribute('aria-label', p ? 'Pause' : 'Play'); };
+    $('cb-play').onclick = () => setPlay(!playing);
+    $('cb-reset').onclick = () => { yaw = -0.62; pitch = 0.55; drawAll(); };
+    whileVisible($('cube'), (dt) => {
+      if (!D || !playing) return;
+      if (tau >= clip.n - 1) { hold += dt; if (hold > 1.5) { tau = 0; hold = 0; if (DEMO.onEnd) DEMO.onEnd('cube'); } }
+      else tau = Math.min(clip.n - 1, tau + dt * 4.5);          // 0.15x, as the space-time view
+      drawAll();
+    });
+    addEventListener('resize', () => D && drawAll());
+    return { load: (id) => { const c = GAL.clips.find((x) => x.id === id); return c ? load(c) : Promise.resolve(); },
+      restart: () => { tau = 0; hold = 0; setPlay(true); if (D) drawAll(); } };
+  }
+
+  // ================================================================== the estimated velocities, as a wind map
+  // Each moving key's velocity, as the network estimates it from token matches, projected into the query camera at the
+  // query time; particles follow that flow over the GALILEO rendering, coloured by direction.
+  function wind() {
+    if (!$('wind')) return null;
+    const cv = $('wd'), ctx = cv.getContext('2d'), W = cv.width;
+    const trail = document.createElement('canvas'); trail.width = trail.height = W;
+    const tc = trail.getContext('2d'), GN = 40, NP = 1600, BINS = 18;
+    let s = null, bgImg = null, F = null, parts = [], token = 0;
+    function build() {
+      const arr = f32(s.g), N = 10, M = s.c2w, K = s.K, c = [M[0][3], M[1][3], M[2][3]];
+      const proj = (x, y, z) => {
+        x -= c[0]; y -= c[1]; z -= c[2];
+        const zc = M[0][2] * x + M[1][2] * y + M[2][2] * z; if (zc < 0.05) return null;
+        return [K[0][0] * (M[0][0] * x + M[1][0] * y + M[2][0] * z) / zc + K[0][2], K[1][1] * (M[0][1] * x + M[1][1] * y + M[2][1] * z) / zc + K[1][2]];
+      };
+      const sx = new Float32Array(GN * GN), sy = new Float32Array(GN * GN), sw = new Float32Array(GN * GN), h = 0.02;
+      for (let i = 0; i < s.ng; i++) {
+        const o = i * N; if (!(arr[o + 9] > 0)) continue;
+        const dt = s.ta - s.times[arr[o + 7]], X = [arr[o] + arr[o + 3] * dt, arr[o + 1] + arr[o + 4] * dt, arr[o + 2] + arr[o + 5] * dt];
+        const p = proj(X[0], X[1], X[2]), q = proj(X[0] + arr[o + 3] * h, X[1] + arr[o + 4] * h, X[2] + arr[o + 5] * h);
+        if (!p || !q) continue;
+        const vx = (q[0] - p[0]) / h, vy = (q[1] - p[1]) / h, gx = (p[0] / 256) * GN, gy = (p[1] / 256) * GN;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const cx = Math.floor(gx) + dx, cy = Math.floor(gy) + dy; if (cx < 0 || cy < 0 || cx >= GN || cy >= GN) continue;
+          const w = Math.exp(-((cx + 0.5 - gx) ** 2 + (cy + 0.5 - gy) ** 2) / 1.1), j = cy * GN + cx;
+          sx[j] += vx * w; sy[j] += vy * w; sw[j] += w;
+        }
+      }
+      const vx = new Float32Array(GN * GN), vy = new Float32Array(GN * GN), ok = new Uint8Array(GN * GN), cells = [], sp = [];
+      for (let j = 0; j < GN * GN; j++) if (sw[j] > 0.3) { vx[j] = sx[j] / sw[j]; vy[j] = sy[j] / sw[j]; ok[j] = 1; cells.push(j); sp.push(Math.hypot(vx[j], vy[j])); }
+      sp.sort((a, b) => a - b);
+      const med = sp.length ? sp[sp.length >> 1] : 1, k = (0.085 * 256) / Math.max(1e-6, med);   // the median flow crosses 8.5% of the frame a second
+      for (const j of cells) { vx[j] *= k; vy[j] *= k; }
+      F = { vx, vy, ok, cells };
+    }
+    function at(x, y) {
+      const g = (x / W) * GN - 0.5, hh = (y / W) * GN - 0.5, x0 = Math.floor(g), y0 = Math.floor(hh), fx = g - x0, fy = hh - y0;
+      let ax = 0, ay = 0, aw = 0;
+      for (const [cx, cy, w] of [[x0, y0, (1 - fx) * (1 - fy)], [x0 + 1, y0, fx * (1 - fy)], [x0, y0 + 1, (1 - fx) * fy], [x0 + 1, y0 + 1, fx * fy]]) {
+        if (cx < 0 || cy < 0 || cx >= GN || cy >= GN) continue; const j = cy * GN + cx; if (!F.ok[j]) continue;
+        ax += F.vx[j] * w; ay += F.vy[j] * w; aw += w;
+      }
+      return aw < 0.25 ? null : [(ax / aw) * (W / 256), (ay / aw) * (W / 256)];
+    }
+    function spawn(p) {
+      const j = F.cells[Math.floor(Math.random() * F.cells.length)], cell = W / GN;
+      p.x = ((j % GN) + Math.random()) * cell; p.y = (Math.floor(j / GN) + Math.random()) * cell; p.age = 0; p.life = 1.2 + Math.random() * 2.4;
+      return p;
+    }
+    function frame(dt) {
+      if (!F || !F.cells.length) return;
+      tc.globalCompositeOperation = 'destination-out'; tc.fillStyle = `rgba(0,0,0,${1 - Math.pow(0.04, dt)})`; tc.fillRect(0, 0, W, W);
+      tc.globalCompositeOperation = 'source-over'; tc.lineWidth = 1.9; tc.lineCap = 'round';
+      const bins = Array.from({ length: BINS }, () => []);
+      for (const p of parts) {
+        const v = at(p.x, p.y); p.age += dt;
+        if (!v || p.age > p.life) { spawn(p); continue; }
+        const nx = p.x + v[0] * dt, ny = p.y + v[1] * dt, hue = (Math.atan2(v[1], v[0]) / (2 * Math.PI) + 1) % 1;
+        bins[Math.floor(hue * BINS) % BINS].push(p.x, p.y, nx, ny); p.x = nx; p.y = ny;
+      }
+      bins.forEach((seg, b) => {
+        if (!seg.length) return;
+        tc.strokeStyle = `hsl(${((b + 0.5) / BINS) * 360} 82% 62%)`; tc.beginPath();
+        for (let i = 0; i < seg.length; i += 4) { tc.moveTo(seg[i], seg[i + 1]); tc.lineTo(seg[i + 2], seg[i + 3]); }
+        tc.stroke();
+      });
+      ctx.globalAlpha = 1; ctx.drawImage(bgImg, 0, 0, W, W);
+      ctx.fillStyle = 'rgba(18,14,10,.58)'; ctx.fillRect(0, 0, W, W);
+      ctx.drawImage(trail, 0, 0);
+      const r = 22, cx = W - r - 16, cy = W - r - 16;                // direction key
+      for (let a = 0; a < 36; a++) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, (a / 36) * 2 * Math.PI, ((a + 1.15) / 36) * 2 * Math.PI); ctx.fillStyle = `hsl(${(a / 36) * 360} 82% 62%)`; ctx.fill(); }
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.45, 0, 7); ctx.fillStyle = 'rgba(18,14,10,.9)'; ctx.fill();
+    }
+    async function load(k) {
+      const my = ++token, im = await loadImg(k.rg);
+      if (my !== token) return;
+      s = k; bgImg = im; build(); tc.clearRect(0, 0, W, W); parts = Array.from({ length: NP }, () => spawn({}));
+      for (let i = 0; i < 40; i++) frame(1 / 30);           // open with the trails already drawn
+    }
+    const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'].filter((id) => GAL.keys.some((k) => k.id === id));
+    chips($('wd-chips'), ids.map((id) => GAL.keys.find((k) => k.id === id)), (k) => load(k));
+    load(GAL.keys.find((k) => k.id === ids[0]));
+    whileVisible(cv, (dt) => { if (!REDUCED) frame(dt); });
+    return {};
+  }
+
+  // ================================================================== comparison pad: the clip plays on; the pointer's height sets the line
+  // between RayRoPE (above) and GALILEO (below)
+  function pad() {
+    if (!$('pad')) return null;
+    const cv = $('pd'), gt = $('pd-gt'), ruler = $('pd-ruler');
+    let c = null, im = null, t = 0, split = 0.5, token = 0;
+    const tile = (m, i) => (m === 'gt' ? [im.sheet, Math.round(i) * 256, c.methods.indexOf('GT') * 256] : [im[m], (i % c.dense.cols) * 256, Math.floor(i / c.dense.cols) * 256]);
+    function draw() {
+      if (!c) return;
+      const ctx = cv.getContext('2d'), W = cv.width, y = Math.round(split * W), di = Math.round(t * c.dense.sub);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      const [ib, bx, by] = tile('b', di), [ig, gx, gy] = tile('g', di);
+      if (y > 0) ctx.drawImage(ib, bx, by, 256, (y / W) * 256, 0, 0, W, y);
+      if (y < W) ctx.drawImage(ig, gx, gy + (y / W) * 256, 256, 256 - (y / W) * 256, 0, y, W, W - y);
+      ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, y - 2, W, 4); ctx.fillStyle = '#fff'; ctx.fillRect(0, y - 1, W, 2);
+      ctx.font = `600 20px ${MONO}`; ctx.textBaseline = 'middle';
+      const tag = (txt, ty, col) => { const w = ctx.measureText(txt).width + 18; ctx.fillStyle = 'rgba(20,16,10,.78)'; ctx.fillRect(10, ty - 15, w, 30); ctx.fillStyle = col; ctx.fillText(txt, 19, ty); };
+      if (y > 44) tag('RayRoPE', y - 26, '#d9cfbd');
+      if (y < W - 44) tag('+ GALILEO', y + 26, '#5fd1ad');
+      const [is, sx, sy] = tile('gt', t), g2 = gt.getContext('2d'); g2.imageSmoothingEnabled = true; g2.imageSmoothingQuality = 'high'; g2.drawImage(is, sx, sy, 256, 256, 0, 0, gt.width, gt.height);
+      $('pd-read').textContent = `frame ${(t + 1).toFixed(1)}/${c.n}`;
+      ruler.querySelector('b').style.left = (t / (c.n - 1)) * 100 + '%';
+    }
+    async function load(clip) {
+      const my = ++token, [sheet, b, g] = await Promise.all([loadImg(clip.src), loadImg(clip.dense.b), loadImg(clip.dense.g)]);
+      if (my !== token) return;
+      c = clip; im = { sheet, b, g }; t = 0;
+      ruler.innerHTML = c.inputs.map((v, j) => `<i style="left:${(v / (c.n - 1)) * 100}%;background:${C.t[j]}"></i>`).join('') + '<b></b>';
+      draw();
+    }
+    const list = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'].map((id) => GAL.clips.find((x) => x.id === id)).filter((x) => x && x.dense);
+    chips($('pd-chips'), list, (clip) => load(clip));
+    load(list[0]);
+    cv.onpointermove = (e) => { if (!c) return; const r = cv.getBoundingClientRect(); split = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); draw(); };
+    let pos = 0;                                            // time runs on at 0.1x whatever the pointer does
+    whileVisible($('pad'), (dt) => { if (!c || REDUCED) return; pos = (pos + dt * 3) % (c.n - 1); t = Math.round(pos * c.dense.sub) / c.dense.sub; draw(); });
+    return {};
+  }
+
   function boot() {
     $('authors').innerHTML = SITE.authors;
     const link = (id, url, label) => { const a = $(id); if (url) { a.href = url; a.removeAttribute('aria-disabled'); if (label) (a.querySelector('span') || a).textContent = label; } };
@@ -1300,7 +1504,7 @@
       setTimeout(() => (b.textContent = 'Copy'), 1600);
     };
     const api = {};
-    for (const fn of [tables, jovilog, keysDemo, player, spacetime, methodAnim, attention, boostAnim, boost]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
+    for (const fn of [tables, jovilog, keysDemo, player, spacetime, cube, methodAnim, attention, boostAnim, boost, wind, pad]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
     try { demo(api); } catch (e) { console.error('demo', e); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

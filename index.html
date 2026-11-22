@@ -382,6 +382,19 @@ footer p + p { margin-top: 8px; font-style: italic; }
   .hb .row { grid-template-columns: minmax(0, 1fr); gap: 3px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* ---- space-time block, wind map of the estimated velocities, comparison pad ---- */
+#cube .panel canvas { aspect-ratio: 560 / 600; background: transparent; cursor: grab; touch-action: pan-y; }
+#cube .panel canvas:active { cursor: grabbing; }
+.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.wind-box { max-width: 640px; margin: 0 auto; }
+#wd, #pd, #pd-gt { display: block; width: 100%; height: auto; aspect-ratio: 1; background: var(--field); border-radius: 2px; }
+#pd { cursor: row-resize; touch-action: none; }
+.pad-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; max-width: 1000px; margin: 0 auto; }
+.pad-ruler { position: relative; height: 18px; margin: 12px auto 0; max-width: 1000px; border-top: 1px solid var(--line); }
+.pad-ruler i { position: absolute; top: -5px; width: 2px; height: 10px; margin-left: -1px; }
+.pad-ruler b { position: absolute; top: -7px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--fg); }
+@media (max-width: 760px) { .pad-grid { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 </head>
@@ -451,6 +464,7 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <button class="view-tab" role="tab" id="tab-player" data-view="player" aria-selected="true" aria-controls="player">Rendered clip</button>
       <button class="view-tab" role="tab" id="tab-xt" data-view="xt" aria-selected="false" aria-controls="xt">One image row over time</button>
       <button class="view-tab" role="tab" id="tab-keys" data-view="keys" aria-selected="false" aria-controls="keys">Where the encoding places each patch</button>
+      <button class="view-tab" role="tab" id="tab-cube" data-view="cube" aria-selected="false" aria-controls="cube">Space-time block</button>
     </div>
 
     <div class="view" id="player" role="tabpanel" aria-labelledby="tab-player">
@@ -518,6 +532,18 @@ footer p + p { margin-top: 8px; font-style: italic; }
         <figure><canvas id="keys-rt" width="168" height="168"></canvas><figcaption><b>Ground truth</b></figcaption></figure>
       </div>
       <div class="view-head"><h3>Where the encoding places each input patch.</h3></div>
+    </div>
+    </div>
+
+    <div class="view" id="cube" role="tabpanel" aria-labelledby="tab-cube" hidden>
+    <div class="inst-body">
+      <div class="panels three">
+        <div class="panel"><div class="cap"><span class="b">RayRoPE</span></div><canvas id="cb-b" width="560" height="600" aria-label="RayRoPE's rendering stacked over time as a block"></canvas></div>
+        <div class="panel"><div class="cap"><span class="g">RayRoPE + GALILEO</span></div><canvas id="cb-g" width="560" height="600" aria-label="GALILEO's rendering stacked over time as a block"></canvas></div>
+        <div class="panel"><div class="cap"><span>Ground truth</span></div><canvas id="cb-gt" width="560" height="600" aria-label="The ground-truth video stacked over time as a block"></canvas></div>
+      </div>
+      <div class="view-ctrl"><button class="icon-btn" id="cb-play" aria-label="Pause">❚❚</button><button class="chip" id="cb-reset">Reset view</button></div>
+      <div class="view-head"><h3>The clip as a block of space and time. Its top face is one image row over time.</h3></div>
     </div>
     </div>
   </div>
@@ -650,6 +676,17 @@ footer p + p { margin-top: 8px; font-style: italic; }
     <p class="claim">Every metric, every dataset, both encodings.</p>
     <p class="lede">All methods share the LVSM backbone and recipe and are trained from scratch for 20k steps; they differ only in the positional encoding, and every one carries a time signal. RayRoPE gets the same depth losses as GALILEO. No method uses ground-truth depth, flow or masks at test time.</p>
   </div>
+  <div class="inst" id="pad" style="margin-bottom:46px">
+    <div class="inst-bar"><div class="chips-row" id="pd-chips" role="group" aria-label="Sample"></div></div>
+    <div class="inst-body">
+      <div class="pad-grid">
+        <div><div class="cap"><span><span class="b">RayRoPE</span> / <span class="g">+ GALILEO</span></span></div><canvas id="pd" width="640" height="640" aria-label="RayRoPE above the line, GALILEO below it, at the time under the pointer"></canvas></div>
+        <div><div class="cap"><span>Ground truth</span><small id="pd-read"></small></div><canvas id="pd-gt" width="640" height="640"></canvas></div>
+      </div>
+      <div class="pad-ruler" id="pd-ruler"></div>
+      <div class="view-head"><h3>Move up and down to slide the line between RayRoPE and GALILEO.</h3></div>
+    </div>
+  </div>
   <div class="tbl" id="tab-main"></div>
 
   <div class="cols" style="margin-top:54px">
@@ -689,6 +726,19 @@ footer p + p { margin-top: 8px; font-style: italic; }
       <p>By default GALILEO fits a constant velocity between adjacent frames, which does not follow content that accelerates or turns; 3D tracks or ground-truth motion can replace the estimate where available.</p>
       <p>Depth and motion accuracy limit the transport. With ground-truth motion PSNR<sub>dyn</sub> on Syn4D rises by 1.38 dB over RayRoPE; with ground-truth depth as well, by 2.3 dB over RayRoPE at the same depth. The estimated velocities recover about two thirds of what ground-truth motion gives.</p>
       <p>The full model relies on depth and motion supervision that unlabeled video does not provide. With the image loss alone, transport still gives 0.56 dB, 60% of the gain.</p>
+  </div>
+</div></section>
+
+<section id="velocity"><div class="wrap">
+  <div class="head">
+    <h2>The Estimated Velocities</h2>
+    <p class="claim">What GALILEO estimates from token matches, drawn as wind over its rendering.</p>
+  </div>
+  <div class="inst" id="wind">
+    <div class="inst-bar"><span class="eyebrow">Model output</span><div class="chips-row" id="wd-chips" role="group" aria-label="Sample"></div></div>
+    <div class="inst-body">
+      <div class="wind-box"><canvas id="wd" width="720" height="720" aria-label="Particles follow the velocities GALILEO estimates for the moving keys, over its rendering"></canvas></div>
+    </div>
   </div>
 </div></section>
 
