@@ -1491,35 +1491,6 @@
     return {};
   }
 
-  const WALL = {"src": "assets/wall/wall.webp", "hs": 176, "items": [{"id": "singer", "label": "Singer", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "train", "label": "Train", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "car", "label": "Car", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "float", "label": "Parade float", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "fish", "label": "Fish", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "soviet", "label": "Courtyard", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "traveler", "label": "Traveler", "inputs": [0.0, 0.2941, 0.5882, 0.8824]}, {"id": "desert", "label": "Desert", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "winter", "label": "Winter scene", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "walker", "label": "Walking figure", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "box", "label": "Box", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "dolphin", "label": "Dolphin", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "robot", "label": "Robot", "inputs": [0.0, 0.3, 0.6, 0.9]}, {"id": "tractor", "label": "Tractor", "inputs": [0.0, 0.3, 0.6, 0.9]}]};
-  // ================================================================== one image row over time, for every sample at once
-  // (the strips are cut ahead of time by src/build_wall.py into one sheet: a column per sample, RayRoPE / GALILEO / truth)
-  function wall() {
-    const host = $('wl');
-    if (!host) return null;
-    loadImg(WALL.src).then((im) => {
-      const PER = 7, HS = WALL.hs;
-      for (let b = 0; b < WALL.items.length; b += PER) {
-        const grp = WALL.items.slice(b, b + PER), g = document.createElement('div');
-        g.className = 'wall-grid'; g.style.setProperty('--n', grp.length);
-        g.innerHTML = '<div class="wt">time ↑</div>' + grp.map((it) => `<div class="wh">${it.label}</div>`).join('');
-        [['RayRoPE', 'b'], ['+ GALILEO', 'g'], ['Ground truth', '']].forEach(([name, cls], r) => {
-          const h = document.createElement('div'); h.className = 'wr ' + cls; h.textContent = name; g.appendChild(h);
-          grp.forEach((it, j) => {
-            const cv = document.createElement('canvas'); cv.width = 256; cv.height = HS;
-            const x = cv.getContext('2d'); x.imageSmoothingEnabled = false;
-            x.drawImage(im, (b + j) * 256, r * HS, 256, HS, 0, 0, 256, HS);
-            it.inputs.forEach((fr, k) => { const y = Math.round((1 - fr) * (HS - 1)); x.fillStyle = C.t[k]; x.globalAlpha = 0.45; x.fillRect(0, y, 256, 1); x.globalAlpha = 1; x.fillRect(0, y - 2, 16, 5); });
-            cv.setAttribute('aria-label', `${name}, ${it.label}: one image row over time`);
-            g.appendChild(cv);
-          });
-        });
-        host.appendChild(g);
-      }
-    });
-    return {};
-  }
-
   function boot() {
     $('authors').innerHTML = SITE.authors;
     const link = (id, url, label) => { const a = $(id); if (url) { a.href = url; a.removeAttribute('aria-disabled'); if (label) (a.querySelector('span') || a).textContent = label; } };
@@ -1542,7 +1513,7 @@
       setTimeout(() => (b.textContent = 'Copy'), 1600);
     };
     const api = {};
-    for (const fn of [tables, jovilog, keysDemo, player, spacetime, cube, methodAnim, attention, boostAnim, boost, wind, pad, wall]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
+    for (const fn of [tables, jovilog, keysDemo, player, spacetime, cube, methodAnim, attention, boostAnim, boost, wind, pad]) { try { api[fn.name] = fn(); } catch (e) { console.error(fn.name, e); } }
     try { demo(api); } catch (e) { console.error('demo', e); }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

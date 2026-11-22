@@ -390,13 +390,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
 .wind-box { max-width: 640px; margin: 0 auto; }
 #wd, #pd, #pd-gt { display: block; width: 100%; height: auto; aspect-ratio: 1; background: var(--field); border-radius: 2px; }
 #pd { cursor: row-resize; touch-action: none; }
-.wall { overflow-x: auto; }
-.wall-grid { display: grid; grid-template-columns: 11ch repeat(var(--n), minmax(0, 1fr)); gap: 6px; align-items: center; min-width: 760px; }
-.wall-grid + .wall-grid { margin-top: 26px; }
-.wall-grid canvas { display: block; width: 100%; height: auto; aspect-ratio: 256 / 176; border-radius: 2px; background: var(--field); }
-.wall-grid .wh { font: 500 14px/1 var(--mono); color: var(--dim); text-align: center; }
-.wall-grid .wr { font: 600 15px/1.2 var(--body); }
-.wall-grid .wt { font: italic 400 13.5px/1 var(--mono); color: var(--faint); }
 .tug { display: flex; gap: 2px; height: 5px; margin: 0 auto 4px; width: 100%; background: color-mix(in srgb, var(--line-soft) 60%, transparent); border-radius: 1px; overflow: hidden; }
 .tug i { background: var(--now); } .tug u { background: var(--base); }
 .pad-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; max-width: 1000px; margin: 0 auto; }
@@ -694,12 +687,6 @@ footer p + p { margin-top: 8px; font-style: italic; }
       </div>
       <div class="pad-ruler" id="pd-ruler"></div>
       <div class="view-head"><h3>Move up and down to slide the line between RayRoPE and GALILEO.</h3></div>
-    </div>
-  </div>
-  <div class="inst" id="wall" style="margin-bottom:46px">
-    <div class="inst-body">
-      <div class="wall" id="wl"></div>
-      <div class="view-head"><h3>One image row over time, for every sample. RayRoPE draws staircases.</h3></div>
     </div>
   </div>
   <div class="tbl" id="tab-main"></div>
