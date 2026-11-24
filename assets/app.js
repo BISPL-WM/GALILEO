@@ -6,7 +6,7 @@
   const SITE = {
     authors: '<span class="an"><a href="https://ggred0123.github.io" target="_blank" rel="noopener">Youngmin Kim</a><sup>*</sup></span> · <span class="an"><a href="https://jinotter3.github.io/" target="_blank" rel="noopener">Seonghyun Jin</a><sup>*</sup></span> · <span class="an"><a href="https://bispl-website.github.io/" target="_blank" rel="noopener">Jong Chul Ye</a><sup>†</sup></span>',   // as in the arXiv version (main_arxiv_new4.tex)
     paper: 'assets/galileo_paper.pdf',
-    arxiv: null,                           // 'https://arxiv.org/abs/....'
+    arxiv: 'https://arxiv.org/abs/2611.29293',
     code: 'https://github.com/BISPL-WM/GALILEO-code',
     models: 'https://huggingface.co/ggred0123/GALILEO',   // the released checkpoints
   };
