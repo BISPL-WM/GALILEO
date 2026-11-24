@@ -68,6 +68,11 @@
   }
 
   // run fn(dt) every animation frame while the element is on screen
+  // run fn once, when the element comes within a screen or so of the viewport
+  function whenNear(el, fn) {
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); fn(); } }, { rootMargin: '800px 0px' });
+    io.observe(el);
+  }
   function whileVisible(el, fn) {
     let vis = false, raf = 0, last = 0;
     const loop = (t) => { if (!vis) { raf = 0; return; } const dt = last ? Math.min(0.1, (t - last) / 1000) : 0; last = t; fn(dt, t / 1000); raf = requestAnimationFrame(loop); };
@@ -393,11 +398,12 @@
       let p = Promise.resolve();
       if (VIEWS[view] && loaded[view] !== clip) { p = VIEWS[view].load(clip) || p; loaded[view] = clip; }
       dispatchEvent(new Event('resize'));                   // charts in a pane that was hidden take their width again
-      shown = 0; prep(clip); prep(nextClip());
+      shown = 0;
       return p.then(() => {
         if (my !== stok) return false;
         steady(true);
         if (body) requestAnimationFrame(() => body.classList.remove('enter'));
+        prep(clip).then(() => prep(nextClip()));             // then this sample's other images, then the next sample's
         return true;
       });
     }
@@ -1448,7 +1454,7 @@
     }
     const ids = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'].filter((id) => GAL.keys.some((k) => k.id === id));
     chips($('wd-chips'), ids.map((id) => GAL.keys.find((k) => k.id === id)), (k) => load(k));
-    load(GAL.keys.find((k) => k.id === ids[0]));
+    whenNear(cv, () => { if (!token) load(GAL.keys.find((k) => k.id === ids[0])); });
     whileVisible(cv, (dt) => { if (!REDUCED) frame(dt); });
     return {};
   }
@@ -1485,7 +1491,7 @@
     }
     const list = ['train', 'singer', 'car', 'float', 'fish', 'soviet', 'walker'].map((id) => GAL.clips.find((x) => x.id === id)).filter((x) => x && x.dense);
     chips($('pd-chips'), list, (clip) => load(clip));
-    load(list[0]);
+    whenNear(cv, () => { if (!token) load(list[0]); });
     cv.onpointermove = (e) => { if (!c) return; const r = cv.getBoundingClientRect(); split = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height)); draw(); };
     let pos = 0;                                            // time runs on at 0.1x whatever the pointer does
     whileVisible($('pad'), (dt) => { if (!c || REDUCED) return; pos = (pos + dt * 3) % (c.n - 1); t = Math.round(pos * c.dense.sub) / c.dense.sub; draw(); });
